@@ -7,9 +7,11 @@ import { GetProductsQuery } from './get-products.query';
 export class GetProductsHandler implements IQueryHandler<GetProductsQuery> {
   constructor(private readonly getProductsService: GetProductsService) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async execute(query: GetProductsQuery): Promise<GetProductsResponseDto> {
-    const products = await this.getProductsService.getProducts();
+    const products = await this.getProductsService.getProducts(
+      query.category,
+      query.sort,
+    );
     return GetProductsResponseDto.fromEntities(products);
   }
 }

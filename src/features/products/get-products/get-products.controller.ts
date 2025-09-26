@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { Mediator } from '../../../core/cqrs/mediator';
 import { GetProductsQuery } from './get-products.query';
 import { GetProductsResponseDto } from './dto/get-products.response.dto';
@@ -10,7 +10,10 @@ export class GetProductsController {
 
   @Get()
   @Public()
-  async getProducts(): Promise<GetProductsResponseDto> {
-    return this.mediator.query(new GetProductsQuery());
+  async getProducts(
+    @Query('category') category?: string,
+    @Query('sort') sort?: string,
+  ): Promise<GetProductsResponseDto> {
+    return this.mediator.query(new GetProductsQuery(category, sort));
   }
 }
