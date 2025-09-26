@@ -3,13 +3,17 @@ import { Mediator } from '../../../core/cqrs/mediator';
 import { GetProductByIdQuery } from './get-product-by-id.query';
 import { GetProductByIdResponseDto } from './dto/get-product-by-id.response.dto';
 import { Public } from '../../../core/auth/public.decorator';
+import { ApiTags } from '@nestjs/swagger';
+import { GetProductByIdDocs } from './get-product-by-id.docs';
 
+@ApiTags('products')
 @Controller('products')
 export class GetProductByIdController {
   constructor(private readonly mediator: Mediator) {}
 
   @Get(':id')
   @Public()
+  @GetProductByIdDocs()
   async getProductById(
     @Param('id') id: number,
   ): Promise<GetProductByIdResponseDto> {

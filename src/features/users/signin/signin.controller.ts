@@ -4,7 +4,10 @@ import { SigninRequestDto } from './dto/signin.request.dto';
 import { SigninResponseDto } from './dto/signin.response.dto';
 import { SigninCommand } from './signin.command';
 import { Public } from '../../../core/auth/public.decorator';
+import { ApiTags } from '@nestjs/swagger';
+import { SigninDocs } from './signin.docs';
 
+@ApiTags('users')
 @Controller('users')
 export class SigninController {
   constructor(private readonly mediator: Mediator) {}
@@ -12,6 +15,7 @@ export class SigninController {
   @Post('signin')
   @HttpCode(HttpStatus.OK)
   @Public()
+  @SigninDocs()
   async signIn(@Body() dto: SigninRequestDto): Promise<SigninResponseDto> {
     const command = SigninCommand.fromBody(dto);
     return this.mediator.command(command);

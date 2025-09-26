@@ -5,13 +5,17 @@ import { CreateProductCommand } from './create-product.command';
 import { Mediator } from '../../../core/cqrs/mediator';
 import { Roles } from '../../../core/auth/roles.decorator';
 import { UserRoles } from '../../../core/auth/user-roles.enum';
+import { ApiTags } from '@nestjs/swagger';
+import { CreateProductDocs } from './create-product.docs';
 
+@ApiTags('products')
 @Controller('products')
 export class CreateProductController {
   constructor(private readonly mediator: Mediator) {}
 
   @Post()
   @Roles(UserRoles.OWNER)
+  @CreateProductDocs()
   async createProduct(
     @Body() createProductDto: CreateProductRequestDto,
   ): Promise<CreateProductResponseDto> {
