@@ -1,17 +1,19 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { HashingService } from '../../../core/hashing/hashing.service';
-import { SignupRepository } from './signup.repository';
 import { User } from '../_shared/user.entity';
+import { UserRepository } from '../_shared/user.repository';
+import { SignupRepository } from './signup.repository';
 
 @Injectable()
 export class SignupService {
   constructor(
+    private readonly userRepository: UserRepository,
     private readonly repo: SignupRepository,
     private readonly hashing: HashingService,
   ) {}
 
   async signUp(email: string, password: string): Promise<User> {
-    const existing = await this.repo.findByEmail(email);
+    const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new ConflictException('Email already in use');
     }

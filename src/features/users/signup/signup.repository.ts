@@ -8,10 +8,6 @@ export class SignupRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
 
-  findByEmail(email: string) {
-    return this.findOne({ where: { email } });
-  }
-
   async createUser(email: string, passwordHash: string): Promise<User> {
     const user = this.create({ email, password: passwordHash });
     await this.save(user);

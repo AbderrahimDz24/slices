@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../_shared/user.entity';
 import { SigninController } from './signin.controller';
 import { SigninService } from './signin.service';
-import { SigninRepository } from './signin.repository';
 import { SigninHandler } from './signin.handler';
+import { UsersSharedModule } from '../_shared/users-shared.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [UsersSharedModule],
   controllers: [SigninController],
-  providers: [SigninHandler, SigninService, SigninRepository],
+  providers: [SigninHandler, SigninService],
 })
 export class SigninModule {}

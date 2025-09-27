@@ -7,9 +7,7 @@ import { UsersModule } from './features/users/users.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     CoreModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

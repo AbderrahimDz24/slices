@@ -1,21 +1,21 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { SigninRepository } from './signin.repository';
 import { HashingService } from '../../../core/hashing/hashing.service';
+import { UserRepository } from '../_shared/user.repository';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Injectable()
 export class SigninService {
   constructor(
-    private readonly repo: SigninRepository,
+    private readonly userRepository: UserRepository,
     private readonly hashing: HashingService,
-    private readonly jwt: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
   async signIn(
     email: string,
     password: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const user = await this.repo.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -23,10 +23,6 @@ export class SigninService {
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = await this.jwt.signAsync(payload);
-    const refreshToken = await this.jwt.signAsync(payload, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+    return this.authService.generateTokens(user);
   }
 }
