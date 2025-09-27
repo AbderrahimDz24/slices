@@ -8,10 +8,10 @@ export class SigninHandler {
   constructor(private readonly service: SigninService) {}
 
   async execute(command: SigninCommand): Promise<SigninResponseDto> {
-    const { accessToken } = await this.service.signIn(
+    const { accessToken, refreshToken } = await this.service.signIn(
       command.email,
       command.password,
     );
-    return { accessToken };
+    return { accessToken, refreshToken };
   }
 }

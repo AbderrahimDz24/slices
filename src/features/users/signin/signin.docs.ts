@@ -11,7 +11,7 @@ export function SigninDocs() {
     ApiBody({ type: SigninRequestDto }),
     ApiOkResponse({
       type: SigninResponseDto,
-      description: 'Signin successful; returns access token',
+      description: 'Signin successful; returns access and refresh tokens',
     }),
   );
 }

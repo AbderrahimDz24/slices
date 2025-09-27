@@ -14,7 +14,7 @@ export class SigninService {
   async signIn(
     email: string,
     password: string,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.repo.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -26,6 +26,7 @@ export class SigninService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwt.signAsync(payload);
-    return { accessToken };
+    const refreshToken = await this.jwt.signAsync(payload, { expiresIn: '7d' });
+    return { accessToken, refreshToken };
   }
 }
