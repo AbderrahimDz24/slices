@@ -13,9 +13,23 @@ async function bootstrap() {
       'API documentation for the Vertical Slices demo application',
     )
     .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'Enter JWT token in the format: Bearer <token>. You can obtain a token from the signin endpoint.',
+      },
+      'bearer',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  // Apply the bearer auth requirement globally so Swagger UI sends the Authorization header for all operations by default
+  document.security = [{ bearer: [] }];
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
