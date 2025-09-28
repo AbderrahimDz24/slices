@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16.4
+    container_name: slices_demo
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: slices
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres_demo_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: slices_api_demo
+    environment:
+      # Postgres connection used by TypeORM (see src/app.module.ts)
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: 123456
+      PG_DB: slices
+      # JWT configuration (see src/core/auth/jwt.config.ts)
+      JWT_SECRET: supersecret_dev_key
+      JWT_TOKEN_AUDIENCE: http://localhost:3000
+      JWT_TOKEN_ISSUER: http://localhost:3000
+      JWT_ACCESS_TOKEN_TTL: 1h
+      JWT_REFRESH_TOKEN_TTL: 7d
+      NODE_ENV: demo
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
