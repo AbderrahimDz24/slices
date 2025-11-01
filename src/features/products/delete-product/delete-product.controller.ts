@@ -2,8 +2,8 @@ import { Controller, Delete, Param } from '@nestjs/common';
 import { Mediator } from '../../../core/cqrs/mediator';
 import { DeleteProductResponseDto } from './dto/delete-product.response.dto';
 import { DeleteProductCommand } from './delete-product.command';
-import { Roles } from '../../../core/auth/roles.decorator';
-import { UserRoles } from '../../../core/auth/user-roles.enum';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRoles } from '../../../common/enums/user-roles.enum';
 import { ApiTags } from '@nestjs/swagger';
 import { DeleteProductDocs } from './delete-product.docs';
 

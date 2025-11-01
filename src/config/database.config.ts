@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { validateConfig } from '../core/utils/validate-config';
+import { validateConfig } from '@common/utils/validate-config';
 
 export class DatabaseConfig {
   @IsString()
@@ -37,6 +37,7 @@ export class DatabaseConfig {
       database: this.PG_DB,
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       synchronize: process.env.NODE_ENV !== 'production',
+      logging: false,
     };
   }
 }

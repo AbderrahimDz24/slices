@@ -3,8 +3,8 @@ import { Mediator } from '../../../core/cqrs/mediator';
 import { UpdateProductRequestDto } from './dto/update-product.request.dto';
 import { UpdateProductResponseDto } from './dto/update-product.response.dto';
 import { UpdateProductCommand } from './update-product.command';
-import { Roles } from '../../../core/auth/roles.decorator';
-import { UserRoles } from '../../../core/auth/user-roles.enum';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRoles } from '../../../common/enums/user-roles.enum';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateProductDocs } from './update-product.docs';
 

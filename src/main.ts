@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
-
+  await app.init();
   const config = new DocumentBuilder()
     .setTitle('Vertical Slices API')
     .setDescription(
@@ -19,7 +19,7 @@ async function bootstrap() {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         description:
-          'Enter JWT token in the format: Bearer <token>. You can obtain a token from the signin endpoint.',
+          'Enter JWT token in the format: Bearer <token>. You can get a token from the signin endpoint.',
       },
       'bearer',
     )
@@ -32,8 +32,9 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 3000;
+  const logger = new Logger('Bootstrap');
   await app.listen(port);
-  console.log(`Server is running on port ${port}.`);
-  console.log(`Swagger docs at http://localhost:${port}/docs`);
+  logger.log(`Server is running on port ${port}.`);
+  logger.log(`Swagger docs at http://localhost:${port}/docs`);
 }
 void bootstrap();

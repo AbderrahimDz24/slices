@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SignupModule } from './signup/signup.module';
-import { SigninModule } from './signin/signin.module';
-import { RefreshTokenModule } from './refresh-token/refresh-token.module';
+import { UserRepository } from './repositores';
 
 @Module({
-  imports: [SignupModule, SigninModule, RefreshTokenModule],
+  imports: [],
+  providers: [UserRepository],
+  exports: [UserRepository],
 })
 export class UsersModule {}
