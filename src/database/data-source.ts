@@ -17,6 +17,5 @@ const AppDataSource = new DataSource({
   migrations: ['src/database/migrations/*.ts'],
   subscribers: [],
 });
-console.log('ook');
 
 export default AppDataSource;

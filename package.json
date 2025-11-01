@@ -17,7 +17,15 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "orm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
+    "orm:ext": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs -d src/database/data-source.ts",
+    "dev:db:create": "npm run orm:ext db:create",
+    "dev:db:drop": "npm run orm:ext db:drop",
+    "dev:db:reset": "npm run dev:db:drop && npm run dev:db:create",
+    "migration:generate": "npm run orm migration:generate",
+    "migration:run": "npm run orm migration:run",
+    "migration:revert": "npm run orm migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -26,15 +34,16 @@
     "@nestjs/cqrs": "^11.0.3",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/typeorm": "^11.0.0",
     "@nestjs/swagger": "^11.0.2",
+    "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "typeorm-extension": "^3.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

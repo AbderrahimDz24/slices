@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { validateConfig } from '@common/utils/validate-config';
 
@@ -25,6 +25,11 @@ export class DatabaseConfig {
   @IsNotEmpty()
   PG_DB: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['true', 'false'])
+  TYPEORM_SYNCHRONIZE: string = 'false';
+
   constructor() {}
 
   public toTypeOrmOptions(): TypeOrmModuleOptions {
@@ -36,7 +41,7 @@ export class DatabaseConfig {
       password: this.PG_PASSWORD,
       database: this.PG_DB,
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: this.TYPEORM_SYNCHRONIZE === 'true',
       logging: false,
     };
   }
