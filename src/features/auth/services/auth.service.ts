@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as config from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { ActiveUserData } from '@auth/common';
 import { User } from '@users/models';
 import jwtConfig from '../core/jwt.config';
@@ -28,7 +28,11 @@ export class AuthService {
     };
   }
 
-  private async signToken<T>(userId: string, expiresIn: string, payload?: T) {
+  private async signToken<T>(
+    userId: string,
+    expiresIn: JwtSignOptions['expiresIn'],
+    payload?: T,
+  ) {
     return await this.jwtService.signAsync(
       {
         sub: userId,
