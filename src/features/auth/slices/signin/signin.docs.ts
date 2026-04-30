@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
-import { SigninRequestDto } from './dto/signin.request.dto';
-import { SigninResponseDto } from './dto/signin.response.dto';
+import { SigninRequestDto } from './dtos/signin.request.dto';
+import { SigninResponseDto } from './dtos/signin.response.dto';
 
 /**
  * Custom decorator that groups Swagger docs for the Signin endpoint.

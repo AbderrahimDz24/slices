@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
-import { RefreshTokenRequestDto } from './refresh-token.request.dto';
-import { SigninResponseDto } from '../signin/dto/signin.response.dto';
+import { RefreshTokenRequestDto } from './dtos/refresh-token.request.dto';
+import { SigninResponseDto } from '@auth/dtos';
 
 /**
  * Swagger docs for refresh-token endpoint

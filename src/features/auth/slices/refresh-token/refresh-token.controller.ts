@@ -1,11 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { RefreshTokenDocs } from './refresh-token.docs';
-import { RefreshTokenRequestDto } from './refresh-token.request.dto';
+import { RefreshTokenRequestDto } from './dtos/refresh-token.request.dto';
 import { RefreshTokenCommand } from './refresh-token.command';
-import { SigninResponseDto } from '../signin/dto/signin.response.dto';
+import { SigninResponseDto } from '@auth/dtos';
 import { Mediator } from '@core/cqrs';
-import { Public } from '../../decorators';
+import { Public } from '@auth/decorators';
 
 @ApiTags('users')
 @Controller('users')

@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { validateConfig } from '@common/utils/validate-config';
+import { validateConfig } from '@common/utils';
 
 export class DatabaseConfig {
   @IsString()

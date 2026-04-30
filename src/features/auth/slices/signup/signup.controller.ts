@@ -1,11 +1,11 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { SignupRequestDto } from './dto/signup.request.dto';
-import { SignupResponseDto } from './dto/signup.response.dto';
+import { SignupRequestDto } from './dtos/signup.request.dto';
+import { SignupResponseDto } from './dtos/signup.response.dto';
 import { SignupCommand } from './signup.command';
 import { ApiTags } from '@nestjs/swagger';
 import { SignupDocs } from './signup.docs';
 import { Mediator } from '@core/cqrs';
-import { Public } from '../../decorators';
+import { Public } from '@auth/decorators';
 
 @ApiTags('users')
 @Controller('users')

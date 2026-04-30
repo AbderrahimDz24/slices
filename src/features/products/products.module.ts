@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { CreateProductModule } from './create-product/create-product.module';
-import { GetProductByIdModule } from './get-product-by-id/get-product-by-id.module';
-import { GetProductsModule } from './get-products/get-products.module';
-import { UpdateProductModule } from './update-product/update-product.module';
-import { DeleteProductModule } from './delete-product/delete-product.module';
+import { CreateProductModule } from './slices/create-product/create-product.module';
+import { DeleteProductModule } from './slices/delete-product/delete-product.module';
+import { GetProductByIdModule } from './slices/get-product-by-id/get-product-by-id.module';
+import { GetProductsModule } from './slices/get-products/get-products.module';
+import { UpdateProductModule } from './slices/update-product/update-product.module';
 
 @Module({
   imports: [

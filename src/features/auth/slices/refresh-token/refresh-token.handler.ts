@@ -1,7 +1,7 @@
 import { CommandHandler } from '@nestjs/cqrs';
+import { RefreshTokenService } from '@auth/services';
 import { RefreshTokenCommand } from './refresh-token.command';
-import { RefreshTokenService } from './refresh-token.service';
-import { SigninResponseDto } from '../signin/dto/signin.response.dto';
+import { SigninResponseDto } from '@auth/dtos';
 
 @CommandHandler(RefreshTokenCommand)
 export class RefreshTokenHandler {

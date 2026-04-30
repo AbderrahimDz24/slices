@@ -1,7 +1,7 @@
 import { CommandHandler } from '@nestjs/cqrs';
+import { SigninService } from '@auth/services';
 import { SigninCommand } from './signin.command';
-import { SigninService } from './signin.service';
-import { SigninResponseDto } from './dto/signin.response.dto';
+import { SigninResponseDto } from './dtos/signin.response.dto';
 
 @CommandHandler(SigninCommand)
 export class SigninHandler {

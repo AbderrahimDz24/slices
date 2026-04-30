@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { RefreshTokenRequestDto } from './refresh-token.request.dto';
+import { RefreshTokenRequestDto } from './dtos/refresh-token.request.dto';
 
 export class RefreshTokenCommand implements ICommand {
   constructor(public readonly refreshToken: string) {}

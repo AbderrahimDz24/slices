@@ -25,6 +25,39 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@auth/*/*',
+                '@products/*/*',
+                '@users/*/*',
+                '@core/*/*',
+                '@common/*/*',
+              ],
+              message:
+                'Use the feature, core, or common root barrel with two segments max.',
+            },
+            {
+              group: [
+                '../../../*',
+                '../../../../*',
+                '../../../../../*',
+                '../../../../../../*',
+              ],
+              message:
+                'Use root aliases for cross-feature or cross-layer imports.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',

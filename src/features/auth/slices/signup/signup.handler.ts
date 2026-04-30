@@ -1,7 +1,7 @@
 import { CommandHandler } from '@nestjs/cqrs';
+import { SignupService } from '@auth/services';
 import { SignupCommand } from './signup.command';
-import { SignupService } from './signup.service';
-import { SignupResponseDto } from './dto/signup.response.dto';
+import { SignupResponseDto } from './dtos/signup.response.dto';
 
 @CommandHandler(SignupCommand)
 export class SignupHandler {
