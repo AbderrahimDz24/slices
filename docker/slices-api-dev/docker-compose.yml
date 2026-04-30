@@ -1,15 +1,13 @@
 services:
   postgres:
     image: postgres:18.0
-    container_name: slices_dev
+    container_name: slices_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: slices
     ports:
-      - "5432:5432"
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/
+      - "50051:5432"
 
 volumes:
   postgres_data:
