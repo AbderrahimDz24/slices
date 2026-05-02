@@ -1,9 +1,10 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, PrimaryColumn } from 'typeorm';
 import { UserRoles } from '@common/enums';
+import { generateUserId } from '@users/utils';
 
 @Entity('users')
 export class User {
-  @PrimaryColumn({ type: 'uuid', default: () => 'uuidv4()' })
+  @PrimaryColumn({ type: 'varchar', length: 20 })
   id: string;
 
   @Column({ type: 'text', unique: true })
@@ -19,4 +20,11 @@ export class User {
     default: UserRoles.REGULAR,
   })
   role: UserRoles;
+
+  @BeforeInsert()
+  assignId() {
+    if (!this.id) {
+      this.id = generateUserId();
+    }
+  }
 }

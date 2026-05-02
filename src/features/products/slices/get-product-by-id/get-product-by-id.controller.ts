@@ -15,7 +15,7 @@ export class GetProductByIdController {
   @Public()
   @GetProductByIdDocs()
   async getProductById(
-    @Param('id') id: number,
+    @Param('id') id: string,
   ): Promise<GetProductByIdResponseDto> {
     return this.mediator.query(new GetProductByIdQuery(id));
   }

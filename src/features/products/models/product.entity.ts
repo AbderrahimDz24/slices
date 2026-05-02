@@ -1,9 +1,10 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, PrimaryColumn } from 'typeorm';
+import { generateProductId } from '@products/utils';
 
 @Entity('products')
 export class Product {
-  @PrimaryColumn({ type: 'uuid', default: () => 'uuidv4()' })
-  id: number;
+  @PrimaryColumn({ type: 'varchar', length: 20 })
+  id: string;
 
   @Column({ type: 'text', unique: true })
   name: string;
@@ -19,4 +20,11 @@ export class Product {
 
   @Column({ type: 'text', nullable: true })
   image: string;
+
+  @BeforeInsert()
+  assignId() {
+    if (!this.id) {
+      this.id = generateProductId();
+    }
+  }
 }

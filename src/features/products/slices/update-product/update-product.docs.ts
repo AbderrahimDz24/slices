@@ -8,7 +8,12 @@ import { UpdateProductResponseDto } from './dtos/update-product.response.dto';
  */
 export function UpdateProductDocs() {
   return applyDecorators(
-    ApiParam({ name: 'id', type: Number, description: 'Product ID' }),
+    ApiParam({
+      name: 'id',
+      type: String,
+      description: 'Product ID',
+      example: 'prd_f63886a3ffc04f6b',
+    }),
     ApiBody({ type: UpdateProductRequestDto }),
     ApiOkResponse({
       type: UpdateProductResponseDto,

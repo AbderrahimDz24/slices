@@ -7,7 +7,7 @@ export class UpdateProductService {
   constructor(private readonly productRepository: UpdateProductRepository) {}
 
   async updateProduct(
-    id: number,
+    id: string,
     name?: string,
     price?: number,
     description?: string,

@@ -9,7 +9,7 @@ export class UpdateProductRepository extends Repository<Product> {
   }
 
   async updateProduct(
-    id: number,
+    id: string,
     fields: Partial<
       Pick<Product, 'name' | 'price' | 'description' | 'category' | 'image'>
     >,

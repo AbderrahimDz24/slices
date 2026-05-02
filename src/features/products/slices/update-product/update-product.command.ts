@@ -1,14 +1,14 @@
 import { UpdateProductRequestDto } from './dtos/update-product.request.dto';
 
 export class UpdateProductCommand {
-  id: number;
+  id: string;
   name?: string;
   price?: number;
   description?: string;
   category?: string;
   image?: string;
 
-  static from(id: number, body: UpdateProductRequestDto): UpdateProductCommand {
+  static from(id: string, body: UpdateProductRequestDto): UpdateProductCommand {
     const command = new UpdateProductCommand();
     command.id = id;
     command.name = body.name;

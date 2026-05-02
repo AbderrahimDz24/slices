@@ -1,7 +1,7 @@
 export class DeleteProductCommand {
-  id: number;
+  id: string;
 
-  static from(id: number): DeleteProductCommand {
+  static from(id: string): DeleteProductCommand {
     const command = new DeleteProductCommand();
     command.id = id;
     return command;

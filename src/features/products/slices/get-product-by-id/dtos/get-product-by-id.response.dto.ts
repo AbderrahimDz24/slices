@@ -2,8 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Product } from '@products/models';
 
 export class GetProductByIdResponseDto {
-  @ApiProperty({ example: 1 })
-  id: number;
+  @ApiProperty({ example: 'prd_f63886a3ffc04f6b' })
+  id: string;
 
   @ApiProperty({ example: 'Wireless Mouse' })
   name: string;

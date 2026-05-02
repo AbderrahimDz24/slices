@@ -16,7 +16,7 @@ export class DeleteProductController {
   @Roles(UserRoles.OWNER)
   @DeleteProductDocs()
   async deleteProduct(
-    @Param('id') id: number,
+    @Param('id') id: string,
   ): Promise<DeleteProductResponseDto> {
     const command = DeleteProductCommand.from(id);
     return this.mediator.command(command);

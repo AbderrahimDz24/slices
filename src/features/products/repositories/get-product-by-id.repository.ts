@@ -9,7 +9,7 @@ export class GetProductByIdRepository extends Repository<Product> {
     super(Product, dataSource.createEntityManager());
   }
 
-  async getProductById(id: number): Promise<Product | null> {
+  async getProductById(id: string): Promise<Product | null> {
     return this.findOneBy({ id });
   }
 }

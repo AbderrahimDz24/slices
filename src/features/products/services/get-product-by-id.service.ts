@@ -6,7 +6,7 @@ import { GetProductByIdRepository } from '@products/repositories';
 export class GetProductByIdService {
   constructor(private readonly productRepository: GetProductByIdRepository) {}
 
-  async getProductById(id: number): Promise<Product> {
+  async getProductById(id: string): Promise<Product> {
     const product = await this.productRepository.getProductById(id);
     if (!product) {
       throw new NotFoundException('Product not found');

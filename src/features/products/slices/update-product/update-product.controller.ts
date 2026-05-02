@@ -17,7 +17,7 @@ export class UpdateProductController {
   @Roles(UserRoles.OWNER)
   @UpdateProductDocs()
   async updateProduct(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() updateProductDto: UpdateProductRequestDto,
   ): Promise<UpdateProductResponseDto> {
     const command = UpdateProductCommand.from(id, updateProductDto);

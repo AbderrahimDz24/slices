@@ -5,7 +5,7 @@ import { DeleteProductRepository } from '@products/repositories';
 export class DeleteProductService {
   constructor(private readonly productRepository: DeleteProductRepository) {}
 
-  async deleteProduct(id: number): Promise<void> {
+  async deleteProduct(id: string): Promise<void> {
     await this.productRepository.deleteProduct(id);
   }
 }
