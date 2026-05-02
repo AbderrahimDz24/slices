@@ -18,3 +18,11 @@ Feature-root support folders such as `common/`, `decorators/`, and `guards/` are
 - Do not deep-import feature internals such as `@auth/core/auth.core.module` or `@products/slices/...`.
 - Keep relative imports local to the current slice.
 - If one slice needs another slice's DTO or shared capability, re-export it through the feature root barrel first.
+
+## Migrations
+- Generate schema migrations with the `npm` scripts whenever possible. Use `npm run migration:generate` instead of hand-writing schema migrations.
+- Treat schema migrations and backfill/data migrations as separate work. If a change needs both, create separate migrations instead of mixing schema and data backfill in one file.
+- Write a migration manually only when generation cannot express the change, such as a backfill migration.
+- Use `npm run migration:run` and `npm run migration:revert` for applying or reverting migrations.
+- If a local or unmerged migration needs to change, do not modify it in place. Delete the old migration, run `npm run dev:db:reset`, then generate a new migration.
+- Do not rewrite shared or already-applied migration history. If a committed migration needs to change after it has been shared or applied, add a follow-up migration instead.
