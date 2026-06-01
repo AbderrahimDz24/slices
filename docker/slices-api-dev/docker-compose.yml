@@ -1,13 +1,19 @@
+name: ${COMPOSE_PROJECT_NAME}
+
 services:
   postgres:
     image: postgres:18.0
-    container_name: slices_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: slices
     ports:
-      - "50051:5432"
+      - "${PG_PORT}:5432"
+
+  redis:
+    image: redis:8.2-alpine
+    ports:
+      - "${REDIS_PORT}:6379"
 
 volumes:
   postgres_data:

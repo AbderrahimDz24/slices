@@ -29,7 +29,7 @@ Tip: Use the Swagger UI to explore endpoints. You can sign up and sign in to obt
 
 
 ## Local development
-If you prefer to run the API locally with Node and only run Postgres via Docker, follow these steps.
+If you prefer to run the API locally with Node and only run Postgres and Redis via Docker, follow these steps.
 
 1) Install dependencies
 ```bash
@@ -37,23 +37,15 @@ npm ci
 # or: npm install
 ```
 
-2) Start Postgres for dev (detached)
-```powershell
-# From the project root
-docker compose -f docker/docker-compose.dev.yml up -d
-# or with Docker Compose v1
-# docker-compose -f docker/docker-compose.dev.yml up -d
-```
-- Data volume path (on host): docker/postgres_data
-- Stop dev DB: `docker compose -f docker/docker-compose.dev.yml down`
-
-3) Configure environment
+2) Configure environment
 The app reads configuration from environment variables (via @nestjs/config). When running locally, typical values are:
 - PG_HOST=localhost
-- PG_PORT=5432
+- PG_PORT=50051
 - PG_USER=postgres
 - PG_PASSWORD=123456
 - PG_DB=slices
+- REDIS_PORT=50052
+- COMPOSE_PROJECT_NAME=slices-api-dev
 - JWT_SECRET=supersecret_dev_key
 - JWT_TOKEN_AUDIENCE=http://localhost:3000
 - JWT_TOKEN_ISSUER=http://localhost:3000
@@ -78,6 +70,13 @@ Examples:
   ```powershell
   Copy-Item -Path .env.example -Destination .env
   ```
+
+3) Start Postgres and Redis for dev (detached)
+```bash
+npm run dev:docker:up
+```
+- Stop the dev Docker stack: `npm run dev:docker:down`
+- The Docker scripts require `.env` at the project root and read published ports from it.
 
 4) Run the API
 ```bash
