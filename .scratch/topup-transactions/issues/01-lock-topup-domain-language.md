@@ -11,10 +11,10 @@ Mobile topup should be described as the first digital product type, not as the w
 
 ## Acceptance criteria
 
-- [ ] `CONTEXT.md` exists at the repo root and follows the repo's glossary-only domain-doc convention.
-- [ ] Glossary entries define `User`, `Client Account`, `Wallet`, `Deposit`, `Digital Product`, `Product Type`, `Offer`, `Transaction`, `API Key`, `Provider`, and `external_id`.
-- [ ] The glossary states that `MOBILE_TOPUP` is the first product type and leaves room for future digital product types.
-- [ ] The glossary avoids implementation details such as table names, routes, DTOs, queues, or file paths.
+- [x] `CONTEXT.md` exists at the repo root and follows the repo's glossary-only domain-doc convention.
+- [x] Glossary entries define `User`, `Client Account`, `Wallet`, `Deposit`, `Digital Product`, `Product Type`, `Offer`, `Transaction`, `API Key`, `Provider`, and `external_id`.
+- [x] The glossary states that `MOBILE_TOPUP` is the first product type and leaves room for future digital product types.
+- [x] The glossary avoids implementation details such as table names, routes, DTOs, queues, or file paths.
 
 ## Blocked by
 
