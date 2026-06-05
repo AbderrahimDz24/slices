@@ -59,6 +59,37 @@ GET {{baseUrl}}/account
 Authorization: Bearer {{clientAccessToken}}
 Accept: application/json
 
+### Create API key
+# @name createApiKey
+POST {{baseUrl}}/account/api-keys
+Authorization: Bearer {{clientAccessToken}}
+Content-Type: application/json
+
+{
+  "name": "Scratch HTTP client"
+}
+
+> {%
+    client.global.set("clientApiKey", response.body.apiKey);
+    client.global.set("clientApiKeyId", response.body.id);
+    client.global.set("clientApiKeyPreview", response.body.keyPreview);
+%}
+
+### List active API keys
+GET {{baseUrl}}/account/api-keys
+Authorization: Bearer {{clientAccessToken}}
+Accept: application/json
+
+### Revoke API key
+DELETE {{baseUrl}}/account/api-keys/{{clientApiKeyId}}
+Authorization: Bearer {{clientAccessToken}}
+Accept: application/json
+
+### Get balance with API key
+GET {{baseUrl}}/account
+Authorization: ApiKey {{clientApiKey}}
+Accept: application/json
+
 ### Deposit
 POST {{baseUrl}}/admin/users/{{clientUserId}}/deposits
 Authorization: Bearer {{adminAccessToken}}
@@ -68,4 +99,3 @@ Content-Type: application/json
   "amount": 5000,
   "note": "Initial funding"
 }
-

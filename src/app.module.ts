@@ -5,6 +5,7 @@ import databaseConfig, { DatabaseConfig } from './config/database.config';
 import { CoreModule } from '@core/core.module';
 import { UsersModule } from '@users/users.module';
 import { AuthModule } from '@auth/auth.module';
+import { ApiKeysModule } from '@api-keys/api-keys.module';
 import { ProductsModule } from '@products/products.module';
 import { WalletsModule } from '@wallets/wallets.module';
 
@@ -20,6 +21,7 @@ import { WalletsModule } from '@wallets/wallets.module';
     WalletsModule,
     ProductsModule,
     UsersModule,
+    ApiKeysModule,
     AuthModule,
   ],
   controllers: [],

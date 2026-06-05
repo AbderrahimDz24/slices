@@ -1,7 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ActiveUser } from '@auth/decorators';
+import { ActiveUser, Auth, Roles } from '@auth/decorators';
 import type { ActiveUserData } from '@auth/common';
+import { AuthType } from '@auth/enums';
+import { UserRoles } from '@common/enums';
 import { Mediator } from '@core/cqrs';
 import { AccountBalanceResponseDto } from './dtos/account-balance.response.dto';
 import { GetAccountBalanceDocs } from './get-account-balance.docs';
@@ -13,6 +15,8 @@ export class GetAccountBalanceController {
   constructor(private readonly mediator: Mediator) {}
 
   @Get()
+  @Auth(AuthType.Bearer, AuthType.ApiKey)
+  @Roles(UserRoles.REGULAR)
   @GetAccountBalanceDocs()
   async getAccountBalance(
     @ActiveUser() activeUser: ActiveUserData,

@@ -27,6 +27,10 @@ Feature-root support folders such as `common/`, `decorators/`, and `guards/` are
 - If a local or unmerged migration needs to change, do not modify it in place. Delete the old migration, run `npm run dev:db:reset`, then generate a new migration.
 - Do not rewrite shared or already-applied migration history. If a committed migration needs to change after it has been shared or applied, add a follow-up migration instead.
 
+## HTTP Scratch Requests
+- Whenever adding, changing, or removing an HTTP endpoint, update `scratch/http/topups.http` in the same change.
+- Include any required setup requests, auth headers, and captured variables needed to exercise the new endpoint from the scratch file.
+
 ## Agent skills
 
 ### Issue tracker

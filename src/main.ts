@@ -23,10 +23,19 @@ async function bootstrap() {
       },
       'bearer',
     )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'Authorization',
+        description: 'Enter API key in the format: ApiKey <key>.',
+      },
+      'apiKey',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  // Apply the bearer auth requirement globally so Swagger UI sends the Authorization header for all operations by default
-  document.security = [{ bearer: [] }];
+  // Apply auth globally so Swagger UI can send credentials for protected operations by default.
+  document.security = [{ bearer: [] }, { apiKey: [] }];
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: { persistAuthorization: true },
   });

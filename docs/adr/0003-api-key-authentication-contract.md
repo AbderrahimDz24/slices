@@ -1,0 +1,3 @@
+# API Key Authentication Contract
+
+Client account API keys are self-managed by authenticated REGULAR users and are accepted only on routes that explicitly allow `AuthType.ApiKey`; admin routes remain Bearer-only. Raw keys use `ak_<mode>_<base64url(keyId.secret)>`, create/list responses expose a non-secret `keyPreview` using the literal raw-key prefix `ak_<mode>_<base64url(keyId.)>`, the server rejects keys whose `test` or `live` mode does not match `API_KEY_MODE`, and only a SHA-256 hash of the random secret is stored because these credentials are high-entropy server-generated secrets rather than human passwords.

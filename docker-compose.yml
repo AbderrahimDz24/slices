@@ -34,6 +34,7 @@ services:
       JWT_TOKEN_ISSUER: http://localhost:3000
       JWT_ACCESS_TOKEN_TTL: 1h
       JWT_REFRESH_TOKEN_TTL: 7d
+      API_KEY_MODE: test
       NODE_ENV: demo
     ports:
       - "3000:3000"

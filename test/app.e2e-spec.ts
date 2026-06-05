@@ -29,6 +29,26 @@ interface AccountBalanceResponseBody {
   updatedAt: string;
 }
 
+interface CreateApiKeyResponseBody {
+  id: string;
+  name: string;
+  keyPreview: string;
+  mode: string;
+  apiKey: string;
+  createdAt: string;
+}
+
+interface ListApiKeysResponseBody {
+  apiKeys: Array<{
+    id: string;
+    name: string;
+    keyPreview: string;
+    mode: string;
+    lastUsedAt: string | null;
+    createdAt: string;
+  }>;
+}
+
 jest.setTimeout(30000);
 
 describe('Wallet and account flows (e2e)', () => {
@@ -284,5 +304,49 @@ describe('Wallet and account flows (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: 500 })
       .expect(404);
+  });
+
+  it('returns keyPreview metadata and accepts the raw key with ApiKey auth', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+    const clientUser = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    const createApiKeyResponse = await request(app.getHttpServer())
+      .post('/account/api-keys')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ name: 'Mobile app integration' })
+      .expect(201);
+
+    const createBody = createApiKeyResponse.body as CreateApiKeyResponseBody;
+    expect(createBody.id).toMatch(/^apk_[0-9a-f]{16}$/);
+    expect(createBody.name).toBe('Mobile app integration');
+    expect(createBody.apiKey.startsWith(createBody.keyPreview)).toBe(true);
+    expect(Buffer.from(createBody.keyPreview.slice(8), 'base64url').toString('utf8')).toBe(
+      `${createBody.id}.`,
+    );
+    expect(createBody).not.toHaveProperty('keyPrefix');
+
+    const listApiKeysResponse = await request(app.getHttpServer())
+      .get('/account/api-keys')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200);
+
+    const listBody = listApiKeysResponse.body as ListApiKeysResponseBody;
+    expect(listBody.apiKeys).toEqual([
+      expect.objectContaining({
+        id: createBody.id,
+        name: 'Mobile app integration',
+        keyPreview: createBody.keyPreview,
+      }),
+    ]);
+
+    await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `ApiKey ${createBody.apiKey}`)
+      .expect(200);
   });
 });

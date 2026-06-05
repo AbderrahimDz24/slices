@@ -54,6 +54,7 @@ npm ci
 - JWT_TOKEN_ISSUER=http://localhost:3000
 - JWT_ACCESS_TOKEN_TTL=1h
 - JWT_REFRESH_TOKEN_TTL=7d
+- API_KEY_MODE=test
 - BOOTSTRAP_ADMIN_EMAIL=admin@topups.com
 - BOOTSTRAP_ADMIN_PASSWORD=strong-password
 
@@ -115,7 +116,8 @@ Now open http://localhost:3000 and http://localhost:3000/docs
 Notes:
 
 - TypeORM schema changes are applied through migrations; do not rely on `synchronize` for local schema setup.
-- Swagger is available at /docs and includes a global Bearer auth header; click Authorize to set your JWT.
+- `API_KEY_MODE` must be `test` for local/dev/staging environments and `live` for production. API keys from one mode are rejected by servers running in the other mode.
+- Swagger is available at /docs and includes global Bearer and ApiKey auth headers; click Authorize to set credentials.
 
 ## Project structure (high level)
 
