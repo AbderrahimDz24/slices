@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { WalletsCoreModule } from '@wallets/core';
 import { UserRepository } from '@users/repositories';
-import { CreateUserService } from '@users/services';
+import { BootstrapAdminService, CreateUserService } from '@users/services';
 
 @Module({
   imports: [WalletsCoreModule],
-  providers: [UserRepository, CreateUserService],
-  exports: [UserRepository, CreateUserService],
+  providers: [UserRepository, BootstrapAdminService, CreateUserService],
+  exports: [UserRepository, BootstrapAdminService, CreateUserService],
 })
 export class UsersCoreModule {}

@@ -1,21 +1,21 @@
-### Sign in as OWNER
-# @name ownerSignIn
+### Sign in as ADMIN
+# @name SignIn (Admin)
 POST {{baseUrl}}/users/signin
 Content-Type: application/json
 
 {
-  "email": "{{ownerEmail}}",
-  "password": "{{ownerPassword}}"
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
 }
 
 > {%
-    client.global.set("ownerAccessToken", response.body.accessToken);
+    client.global.set("adminAccessToken", response.body.accessToken);
 %}
 
 ### Create a REGULAR client user and wallet
 # @name createClientUser
 POST {{baseUrl}}/admin/users
-Authorization: Bearer {{ownerAccessToken}}
+Authorization: Bearer {{adminAccessToken}}
 Content-Type: application/json
 
 {
@@ -28,20 +28,20 @@ Content-Type: application/json
     client.global.set("clientUserId", response.body.id);
 %}
 
-### Create another OWNER user
-# @name createOwnerUser
+### Create another ADMIN user
+# @name createAdminUser
 POST {{baseUrl}}/admin/users
-Authorization: Bearer {{ownerAccessToken}}
+Authorization: Bearer {{adminAccessToken}}
 Content-Type: application/json
 
 {
-  "email": "owner-2@example.com",
-  "password": "{{clientPassword}}",
-  "role": "OWNER"
+  "email": "admin-2@example.com",
+  "password": "{{adminPassword}}",
+  "role": "ADMIN"
 }
 
 ### Sign in as client user
-# @name clientSignIn
+# @name SignIn (User)
 POST {{baseUrl}}/users/signin
 Content-Type: application/json
 
@@ -54,22 +54,18 @@ Content-Type: application/json
     client.global.set("clientAccessToken", response.body.accessToken);
 %}
 
-### Read client account balance before deposit
+### Get balance
 GET {{baseUrl}}/account
 Authorization: Bearer {{clientAccessToken}}
 Accept: application/json
 
-### Deposit into client wallet
+### Deposit
 POST {{baseUrl}}/admin/users/{{clientUserId}}/deposits
-Authorization: Bearer {{ownerAccessToken}}
+Authorization: Bearer {{adminAccessToken}}
 Content-Type: application/json
 
 {
-  "amount": {{depositAmount}},
+  "amount": 5000,
   "note": "Initial funding"
 }
 
-### Read client account balance after deposit
-GET {{baseUrl}}/account
-Authorization: Bearer {{clientAccessToken}}
-Accept: application/json

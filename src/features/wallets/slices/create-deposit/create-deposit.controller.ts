@@ -15,7 +15,7 @@ export class CreateDepositController {
   constructor(private readonly mediator: Mediator) {}
 
   @Post()
-  @Roles(UserRoles.OWNER)
+  @Roles(UserRoles.ADMIN)
   @CreateDepositDocs()
   async createDeposit(
     @Param('userId') userId: string,

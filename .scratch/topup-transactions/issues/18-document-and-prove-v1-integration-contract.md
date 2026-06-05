@@ -9,7 +9,7 @@ Document the v1 integration contract in Swagger and add integration tests that p
 
 ## Acceptance criteria
 
-- [ ] Swagger documents API key management, ApiKey auth, wallet/account reads, OWNER deposits, products, offers, transactions, errors, and rate limits.
+- [ ] Swagger documents API key management, ApiKey auth, wallet/account reads, ADMIN deposits, products, offers, transactions, errors, and rate limits.
 - [ ] Integration tests cover key creation, key revocation, deposit, account read, product/offer discovery, transaction creation, transaction reads, sandbox success, sandbox failure, duplicate `external_id`, insufficient balance, prefix rejection, account isolation, and rate limiting.
 - [ ] Tests verify wallet available/reserved/total balance changes through reservation, success consumption, and failure release.
 - [ ] Tests verify no API response leaks hashed API key material.

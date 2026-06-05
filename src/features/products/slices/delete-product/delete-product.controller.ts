@@ -13,7 +13,7 @@ export class DeleteProductController {
   constructor(private readonly mediator: Mediator) {}
 
   @Delete(':id')
-  @Roles(UserRoles.OWNER)
+  @Roles(UserRoles.ADMIN)
   @DeleteProductDocs()
   async deleteProduct(
     @Param('id') id: string,

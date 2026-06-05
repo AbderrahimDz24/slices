@@ -13,6 +13,22 @@ import {
   WalletLedgerEntryType,
 } from '@wallets/models';
 
+interface SigninResponseBody {
+  accessToken: string;
+}
+
+interface CreateUserResponseBody {
+  id: string;
+}
+
+interface AccountBalanceResponseBody {
+  availableBalance: number;
+  reservedBalance: number;
+  totalBalance: number;
+  currency: string;
+  updatedAt: string;
+}
+
 jest.setTimeout(30000);
 
 describe('Wallet and account flows (e2e)', () => {
@@ -75,27 +91,27 @@ describe('Wallet and account flows (e2e)', () => {
       .send({ email: user.email, password })
       .expect(200);
 
-    return response.body.accessToken as string;
+    const body = response.body as SigninResponseBody;
+    return body.accessToken;
   }
 
   async function createAdminManagedUser(
-    ownerToken: string,
+    adminToken: string,
     role: UserRoles,
   ): Promise<User> {
     const email = uniqueEmail(role.toLowerCase());
     const response = await request(app.getHttpServer())
       .post('/admin/users')
-      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ email, password, role })
       .expect(201);
 
-    expect(response.body).toEqual({
-      id: expect.stringMatching(/^usr_[0-9a-f]{16}$/),
-    });
+    const body = response.body as CreateUserResponseBody;
+    expect(body.id).toMatch(/^usr_[0-9a-f]{16}$/);
 
     const user = await dataSource
       .getRepository(User)
-      .findOneByOrFail({ id: response.body.id as string });
+      .findOneByOrFail({ id: body.id });
     expect(user.email).toBe(email);
     expect(user.role).toBe(role);
     return user;
@@ -108,12 +124,12 @@ describe('Wallet and account flows (e2e)', () => {
       .expect(404);
   });
 
-  it('allows an OWNER to create users and creates a zero wallet', async () => {
-    const owner = await seedUser(UserRoles.OWNER);
-    const ownerToken = await signIn(owner);
+  it('allows an ADMIN to create REGULAR users and creates a zero wallet', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
 
     const createdUser = await createAdminManagedUser(
-      ownerToken,
+      adminToken,
       UserRoles.REGULAR,
     );
     const createdUserToken = await signIn(createdUser);
@@ -123,16 +139,47 @@ describe('Wallet and account flows (e2e)', () => {
       .set('Authorization', `Bearer ${createdUserToken}`)
       .expect(200);
 
-    expect(accountResponse.body).toEqual({
+    const accountBody = accountResponse.body as AccountBalanceResponseBody;
+    expect(accountBody).toMatchObject({
       availableBalance: 0,
       reservedBalance: 0,
       totalBalance: 0,
       currency: 'DZD',
-      updatedAt: expect.any(String),
     });
+    expect(typeof accountBody.updatedAt).toBe('string');
   });
 
-  it('rejects admin user creation by non-OWNER users', async () => {
+  it('allows an ADMIN to create another ADMIN without creating a wallet', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+
+    const createdAdmin = await createAdminManagedUser(
+      adminToken,
+      UserRoles.ADMIN,
+    );
+
+    const wallet = await dataSource
+      .getRepository(Wallet)
+      .findOneBy({ userId: createdAdmin.id });
+    expect(wallet).toBeNull();
+  });
+
+  it('rejects legacy OWNER role values', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+
+    await request(app.getHttpServer())
+      .post('/admin/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        email: uniqueEmail('blocked-owner'),
+        password,
+        role: 'OWNER',
+      })
+      .expect(400);
+  });
+
+  it('rejects admin user creation by non-ADMIN users', async () => {
     const regular = await seedUser(UserRoles.REGULAR, true);
     const regularToken = await signIn(regular);
 
@@ -148,17 +195,17 @@ describe('Wallet and account flows (e2e)', () => {
   });
 
   it('creates deposits, updates account balance, and writes a ledger entry', async () => {
-    const owner = await seedUser(UserRoles.OWNER);
-    const ownerToken = await signIn(owner);
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
     const clientUser = await createAdminManagedUser(
-      ownerToken,
+      adminToken,
       UserRoles.REGULAR,
     );
     const clientToken = await signIn(clientUser);
 
     await request(app.getHttpServer())
       .post(`/admin/users/${clientUser.id}/deposits`)
-      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: 2500, note: 'Initial funding' })
       .expect(201)
       .expect({ message: 'Deposit created successfully' });
@@ -168,13 +215,14 @@ describe('Wallet and account flows (e2e)', () => {
       .set('Authorization', `Bearer ${clientToken}`)
       .expect(200);
 
-    expect(accountResponse.body).toEqual({
+    const accountBody = accountResponse.body as AccountBalanceResponseBody;
+    expect(accountBody).toMatchObject({
       availableBalance: 2500,
       reservedBalance: 0,
       totalBalance: 2500,
       currency: 'DZD',
-      updatedAt: expect.any(String),
     });
+    expect(typeof accountBody.updatedAt).toBe('string');
 
     const ledgerEntry = await dataSource
       .getRepository(WalletLedgerEntry)
@@ -195,20 +243,20 @@ describe('Wallet and account flows (e2e)', () => {
       reservedBalanceDelta: 0,
       availableBalanceAfter: 2500,
       reservedBalanceAfter: 0,
-      actorUserId: owner.id,
+      actorUserId: admin.id,
       note: 'Initial funding',
     });
   });
 
-  it('rejects deposits by non-OWNER users', async () => {
-    const owner = await seedUser(UserRoles.OWNER);
-    const ownerToken = await signIn(owner);
+  it('rejects deposits by non-ADMIN users', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
     const regularActor = await createAdminManagedUser(
-      ownerToken,
+      adminToken,
       UserRoles.REGULAR,
     );
     const targetUser = await createAdminManagedUser(
-      ownerToken,
+      adminToken,
       UserRoles.REGULAR,
     );
     const regularToken = await signIn(regularActor);
@@ -221,8 +269,8 @@ describe('Wallet and account flows (e2e)', () => {
   });
 
   it('returns 404 when an authenticated user has no wallet', async () => {
-    const owner = await seedUser(UserRoles.OWNER);
-    const ownerToken = await signIn(owner);
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
     const userWithoutWallet = await seedUser(UserRoles.REGULAR);
     const userWithoutWalletToken = await signIn(userWithoutWallet);
 
@@ -233,7 +281,7 @@ describe('Wallet and account flows (e2e)', () => {
 
     await request(app.getHttpServer())
       .post(`/admin/users/${userWithoutWallet.id}/deposits`)
-      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: 500 })
       .expect(404);
   });

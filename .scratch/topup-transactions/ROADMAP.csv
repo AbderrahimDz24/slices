@@ -2,7 +2,7 @@ order,issue_file,title,track,status,type,outcome,depends_on
 1,01-lock-topup-domain-language.md,Lock TopUp Domain Language,Product,ready-for-human,HITL,"Team agrees on wallet, digital product, offer, transaction, deposit, API key, and provider terms.",None
 2,02-hetzner-server-provisioning.md,Hetzner Server Provisioning,DevOps,ready-for-human,HITL,"A Hetzner VM is ready for Docker deployment.",None
 3,03-production-container-setup.md,Production Container Setup,DevOps,ready-for-agent,AFK,"The app has a production-ready container stack shape.",None
-4,04-create-wallet-and-deposit-path.md,Create Wallet And Deposit Path,Product,ready-for-agent,AFK,"Admin can fund a user wallet and users can read DZD balances.",01-lock-topup-domain-language.md
+4,04-create-wallet-and-deposit-path.md,Create Wallet And Deposit Path,Product,done,AFK,"Admin can fund a user wallet and users can read DZD balances.",01-lock-topup-domain-language.md
 5,05-expose-self-service-api-keys.md,Expose Self-Service API Keys,Product,ready-for-agent,AFK,"Users can create, list, and revoke API keys.",01-lock-topup-domain-language.md
 6,06-publish-initial-digital-product-catalog.md,Publish Initial Digital Product Catalog,Product,ready-for-agent,AFK,"Mobilis, Djezzy, and Ooredoo prepaid offers are visible.",01-lock-topup-domain-language.md
 7,07-production-environment-config.md,Production Environment Config,DevOps,ready-for-human,HITL,"Production/staging secrets and runtime settings are defined.","03-production-container-setup.md;02-hetzner-server-provisioning.md"

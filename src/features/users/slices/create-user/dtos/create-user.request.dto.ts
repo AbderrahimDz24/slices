@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, MinLength } from 'class-validator';
 import { UserRoles } from '@common/enums';
 
-export class CreateAdminUserRequestDto {
+export class CreateUserRequestDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;

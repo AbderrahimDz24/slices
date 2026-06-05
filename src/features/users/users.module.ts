@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { UsersCoreModule } from './core';
-import { CreateAdminUserModule } from './slices/create-admin-user/create-admin-user.module';
+import { CreateUserModule } from './slices/create-user/create-user.module';
 
 @Module({
-  imports: [UsersCoreModule, CreateAdminUserModule],
+  imports: [UsersCoreModule, CreateUserModule],
   exports: [UsersCoreModule],
 })
 export class UsersModule {}

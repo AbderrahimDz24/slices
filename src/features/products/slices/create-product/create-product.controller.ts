@@ -14,7 +14,7 @@ export class CreateProductController {
   constructor(private readonly mediator: Mediator) {}
 
   @Post()
-  @Roles(UserRoles.OWNER)
+  @Roles(UserRoles.ADMIN)
   @CreateProductDocs()
   async createProduct(
     @Body() createProductDto: CreateProductRequestDto,

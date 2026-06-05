@@ -25,6 +25,7 @@
     "dev:db:reset": "npm run dev:db:drop && npm run dev:db:create",
     "dev:docker:up": "docker compose --env-file .env -f docker/slices-api-dev/docker-compose.yml up -d",
     "dev:docker:down": "docker compose --env-file .env -f docker/slices-api-dev/docker-compose.yml down",
+    "admin:bootstrap": "ts-node -r tsconfig-paths/register src/scripts/bootstrap-admin.ts",
     "migration:generate": "npm run orm migration:generate",
     "migration:run": "npm run orm migration:run",
     "migration:revert": "npm run orm migration:revert"

@@ -14,6 +14,14 @@ export class UserRepository extends Repository<User> {
     return repository.findOne({ where: { email } });
   }
 
+  async existsByRole(
+    role: UserRoles,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    const repository = manager?.getRepository(User) ?? this;
+    return repository.exists({ where: { role } });
+  }
+
   async createUser(
     email: string,
     passwordHash: string,

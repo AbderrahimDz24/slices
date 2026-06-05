@@ -14,7 +14,7 @@ export class UpdateProductController {
   constructor(private readonly mediator: Mediator) {}
 
   @Put(':id')
-  @Roles(UserRoles.OWNER)
+  @Roles(UserRoles.ADMIN)
   @UpdateProductDocs()
   async updateProduct(
     @Param('id') id: string,

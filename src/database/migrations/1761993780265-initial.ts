@@ -5,7 +5,7 @@ export class Initial1761993780265 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TYPE "public"."role" AS ENUM('OWNER', 'REGULAR')`,
+      `CREATE TYPE "public"."role" AS ENUM('ADMIN', 'REGULAR')`,
     );
     await queryRunner.query(`
       CREATE TABLE "users" (

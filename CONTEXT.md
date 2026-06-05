@@ -12,6 +12,10 @@ _Avoid_: Customer, API client, merchant account
 The application identity used for login and roles; a user may represent a client account, but product-facing balances and transactions belong to the Client Account.
 _Avoid_: Treating User as the product-facing name for client-owned balances or transactions
 
+**Admin**:
+A platform-operator user identity that manages users, products, and wallet deposits.
+_Avoid_: Owner, client admin
+
 **Wallet**:
 The DZD balance holder for a client account, split between funds available for new transactions and funds reserved for in-flight transactions.
 _Avoid_: Account balance, ledger
