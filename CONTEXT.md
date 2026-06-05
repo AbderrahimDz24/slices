@@ -36,6 +36,10 @@ _Avoid_: Category, provider type
 The first product type, used for prepaid mobile credit delivered to a phone number.
 _Avoid_: Treating mobile topup as the whole platform model
 
+**MSISDN**:
+The mobile phone number that receives a mobile topup.
+_Avoid_: Phone number as a loose term when the field must identify the topup recipient
+
 **Offer**:
 A purchasable configuration under a digital product.
 _Avoid_: SKU, plan, package

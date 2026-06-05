@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */
 import {
   CanActivate,
   ExecutionContext,
@@ -49,6 +48,6 @@ export class ApiKeyAuthGuard implements CanActivate {
     }
 
     const [scheme, key] = auth.split(' ');
-    return scheme === AuthType.ApiKey && key ? key : undefined;
+    return scheme === 'ApiKey' && key ? key : undefined;
   }
 }

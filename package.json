@@ -22,7 +22,7 @@
     "orm:ext": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs -d src/database/data-source.ts",
     "dev:db:create": "npm run orm:ext db:create",
     "dev:db:drop": "npm run orm:ext db:drop",
-    "dev:db:reset": "npm run dev:db:drop && npm run dev:db:create",
+    "dev:db:reset": "npm run dev:db:drop && npm run dev:db:create && npm run admin:bootstrap",
     "dev:docker:up": "docker compose --env-file .env -f docker/slices-api-dev/docker-compose.yml up -d",
     "dev:docker:down": "docker compose --env-file .env -f docker/slices-api-dev/docker-compose.yml down",
     "admin:bootstrap": "ts-node -r tsconfig-paths/register src/scripts/bootstrap-admin.ts",

@@ -59,6 +59,12 @@ GET {{baseUrl}}/account
 Authorization: Bearer {{clientAccessToken}}
 Accept: application/json
 
+### List active catalog offers with Bearer auth
+# @name listOffersBearer
+GET {{baseUrl}}/offers
+Authorization: Bearer {{clientAccessToken}}
+Accept: application/json
+
 ### Create API key
 # @name createApiKey
 POST {{baseUrl}}/account/api-keys
@@ -85,8 +91,14 @@ DELETE {{baseUrl}}/account/api-keys/{{clientApiKeyId}}
 Authorization: Bearer {{clientAccessToken}}
 Accept: application/json
 
-### Get balance with API key
+### Get balance (API key)
 GET {{baseUrl}}/account
+Authorization: ApiKey {{clientApiKey}}
+Accept: application/json
+
+### List active catalog offers with API key
+# @name listOffers (ApiKey)
+GET {{baseUrl}}/offers
 Authorization: ApiKey {{clientApiKey}}
 Accept: application/json
 

@@ -18,6 +18,7 @@ describe('ApiKeyAuthGuard', () => {
   }
 
   it('attaches ActiveUserData for a valid API key', async () => {
+    const validateSubmittedKey = jest.fn();
     const apiKey = {
       id: 'apk_f63886a3ffc04f6b',
       user: {
@@ -26,8 +27,9 @@ describe('ApiKeyAuthGuard', () => {
         role: UserRoles.REGULAR,
       },
     } as ApiKey;
+    validateSubmittedKey.mockResolvedValue(apiKey);
     const service = {
-      validateSubmittedKey: jest.fn().mockResolvedValue(apiKey),
+      validateSubmittedKey,
     } as unknown as ApiKeysService;
     const guard = new ApiKeyAuthGuard(service);
     const { context, request } = contextFor({
@@ -36,9 +38,7 @@ describe('ApiKeyAuthGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(service.validateSubmittedKey).toHaveBeenCalledWith(
-      'ak_test_payload',
-    );
+    expect(validateSubmittedKey).toHaveBeenCalledWith('ak_test_payload');
     expect(request).toMatchObject({
       user: {
         sub: 'usr_f63886a3ffc04f6b',
@@ -51,8 +51,9 @@ describe('ApiKeyAuthGuard', () => {
   });
 
   it('rejects missing API key headers', async () => {
+    const validateSubmittedKey = jest.fn();
     const service = {
-      validateSubmittedKey: jest.fn(),
+      validateSubmittedKey,
     } as unknown as ApiKeysService;
     const guard = new ApiKeyAuthGuard(service);
     const { context } = contextFor();
@@ -60,12 +61,13 @@ describe('ApiKeyAuthGuard', () => {
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
-    expect(service.validateSubmittedKey).not.toHaveBeenCalled();
+    expect(validateSubmittedKey).not.toHaveBeenCalled();
   });
 
   it('rejects invalid API keys', async () => {
+    const validateSubmittedKey = jest.fn().mockResolvedValue(null);
     const service = {
-      validateSubmittedKey: jest.fn().mockResolvedValue(null),
+      validateSubmittedKey,
     } as unknown as ApiKeysService;
     const guard = new ApiKeyAuthGuard(service);
     const { context } = contextFor({

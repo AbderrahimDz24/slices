@@ -8,7 +8,7 @@ describe('ApiKeysService', () => {
   function setup(mode: ApiKeyMode = ApiKeyMode.Test) {
     const records = new Map<string, ApiKey>();
     const createApiKey = jest.fn(
-      async (input: CreateApiKeyRecord): Promise<ApiKey> => {
+      (input: CreateApiKeyRecord): Promise<ApiKey> => {
         const apiKey = {
           ...input,
           user: {
@@ -22,33 +22,38 @@ describe('ApiKeysService', () => {
           updatedAt: new Date('2025-07-15T10:20:00.000Z'),
         } as ApiKey;
         records.set(apiKey.id, apiKey);
-        return apiKey;
+        return Promise.resolve(apiKey);
       },
     );
     const findActiveById = jest.fn(
-      async (id: string) => records.get(id) ?? null,
+      (id: string): Promise<ApiKey | null> =>
+        Promise.resolve(records.get(id) ?? null),
     );
-    const markLastUsed = jest.fn(async (id: string, lastUsedAt: Date) => {
+    const markLastUsed = jest.fn((id: string, lastUsedAt: Date) => {
       const apiKey = records.get(id);
       if (apiKey) {
         apiKey.lastUsedAt = lastUsedAt;
       }
+      return Promise.resolve();
     });
-    const revokeForUser = jest.fn(async (id: string, userId: string) => {
+    const revokeForUser = jest.fn((id: string, userId: string) => {
       const apiKey = records.get(id);
       if (!apiKey || apiKey.userId !== userId || apiKey.revokedAt) {
-        return false;
+        return Promise.resolve(false);
       }
       apiKey.revokedAt = new Date('2025-07-16T10:20:00.000Z');
-      return true;
+      return Promise.resolve(true);
     });
     const repository = {
       createApiKey,
       findActiveById,
-      findActiveByUserId: jest.fn(async (userId: string) =>
-        [...records.values()].filter(
-          (apiKey) => apiKey.userId === userId && !apiKey.revokedAt,
-        ),
+      findActiveByUserId: jest.fn(
+        (userId: string): Promise<ApiKey[]> =>
+          Promise.resolve(
+            [...records.values()].filter(
+              (apiKey) => apiKey.userId === userId && !apiKey.revokedAt,
+            ),
+          ),
       ),
       markLastUsed,
       revokeForUser,
@@ -81,9 +86,10 @@ describe('ApiKeysService', () => {
   }
 
   function decodePreviewPayload(keyPreview: string): string {
-    return Buffer.from(keyPreview.slice('ak_test_'.length), 'base64url').toString(
-      'utf8',
-    );
+    return Buffer.from(
+      keyPreview.slice('ak_test_'.length),
+      'base64url',
+    ).toString('utf8');
   }
 
   it('creates a show-once raw key and stores only the secret hash', async () => {
@@ -113,10 +119,12 @@ describe('ApiKeysService', () => {
         userId: 'usr_f63886a3ffc04f6b',
         name: 'Mobile app integration',
         keyPreview: created.apiKey.keyPreview,
-        secretHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        secretHash: expect.any(String) as string,
         mode: ApiKeyMode.Test,
       }),
     );
+    const createInput = createApiKey.mock.calls[0]?.[0];
+    expect(createInput?.secretHash).toMatch(/^[a-f0-9]{64}$/);
     expect(created.rawKey).not.toContain(created.apiKey.secretHash);
   });
 

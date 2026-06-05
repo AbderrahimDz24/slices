@@ -19,11 +19,13 @@ describe('AuthenticationGuard', () => {
     const reflector = {
       getAllAndOverride: jest.fn().mockReturnValue(authTypes),
     } as unknown as Reflector;
+    const jwtCanActivate = jest.fn().mockResolvedValue(true);
     const jwtAuthGuard = {
-      canActivate: jest.fn().mockResolvedValue(true),
+      canActivate: jwtCanActivate,
     } as unknown as JwtAuthGuard;
+    const apiKeyCanActivate = jest.fn().mockResolvedValue(true);
     const apiKeyAuthGuard = {
-      canActivate: jest.fn().mockResolvedValue(true),
+      canActivate: apiKeyCanActivate,
     } as unknown as ApiKeyAuthGuard;
     const guard = new AuthenticationGuard(
       reflector,
@@ -32,43 +34,45 @@ describe('AuthenticationGuard', () => {
     );
 
     return {
+      apiKeyCanActivate,
       apiKeyAuthGuard: apiKeyAuthGuard as CanActivate,
       guard,
+      jwtCanActivate,
       jwtAuthGuard: jwtAuthGuard as CanActivate,
       reflector,
     };
   }
 
   it('defaults to Bearer authentication', async () => {
-    const { apiKeyAuthGuard, guard, jwtAuthGuard } = setup();
+    const { apiKeyCanActivate, guard, jwtCanActivate } = setup();
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(jwtAuthGuard.canActivate).toHaveBeenCalledWith(context);
-    expect(apiKeyAuthGuard.canActivate).not.toHaveBeenCalled();
+    expect(jwtCanActivate).toHaveBeenCalledWith(context);
+    expect(apiKeyCanActivate).not.toHaveBeenCalled();
   });
 
   it('allows AuthType.None without calling credential guards', async () => {
-    const { apiKeyAuthGuard, guard, jwtAuthGuard } = setup([AuthType.None]);
+    const { apiKeyCanActivate, guard, jwtCanActivate } = setup([AuthType.None]);
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(jwtAuthGuard.canActivate).not.toHaveBeenCalled();
-    expect(apiKeyAuthGuard.canActivate).not.toHaveBeenCalled();
+    expect(jwtCanActivate).not.toHaveBeenCalled();
+    expect(apiKeyCanActivate).not.toHaveBeenCalled();
   });
 
   it('falls back to ApiKey when Bearer fails on a route that allows both', async () => {
-    const { apiKeyAuthGuard, guard, jwtAuthGuard } = setup([
+    const { apiKeyCanActivate, guard, jwtCanActivate } = setup([
       AuthType.Bearer,
       AuthType.ApiKey,
     ]);
-    jest
-      .spyOn(jwtAuthGuard, 'canActivate')
-      .mockRejectedValue(new UnauthorizedException('Invalid bearer'));
+    jwtCanActivate.mockRejectedValue(
+      new UnauthorizedException('Invalid bearer'),
+    );
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(jwtAuthGuard.canActivate).toHaveBeenCalledWith(context);
-    expect(apiKeyAuthGuard.canActivate).toHaveBeenCalledWith(context);
+    expect(jwtCanActivate).toHaveBeenCalledWith(context);
+    expect(apiKeyCanActivate).toHaveBeenCalledWith(context);
   });
 });

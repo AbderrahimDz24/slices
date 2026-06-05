@@ -1,36 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Product } from '@products/models';
-import {
-  CreateProductRepository,
-  DeleteProductRepository,
-  GetProductByIdRepository,
-  GetProductsRepository,
-  UpdateProductRepository,
-} from '@products/repositories';
-import {
-  CreateProductService,
-  DeleteProductService,
-  GetProductByIdService,
-  GetProductsService,
-  UpdateProductService,
-} from '@products/services';
+import { Offer, Product } from '@products/models';
+import { OfferRepository } from '@products/repositories';
+import { GetOffersService } from '@products/services';
 
-const providers = [
-  CreateProductRepository,
-  CreateProductService,
-  DeleteProductRepository,
-  DeleteProductService,
-  GetProductByIdRepository,
-  GetProductByIdService,
-  GetProductsRepository,
-  GetProductsService,
-  UpdateProductRepository,
-  UpdateProductService,
-];
+const providers = [OfferRepository, GetOffersService];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product])],
+  imports: [TypeOrmModule.forFeature([Product, Offer])],
   providers,
   exports: [TypeOrmModule, ...providers],
 })

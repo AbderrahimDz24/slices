@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { UserRoles } from '@common/enums';
 import { HashingService } from '@core/hashing';
+import { Offer, OfferStatus, Product, ProductType } from '@products/models';
 import { User } from '@users/models';
 import {
   Wallet,
@@ -46,6 +47,29 @@ interface ListApiKeysResponseBody {
     mode: string;
     lastUsedAt: string | null;
     createdAt: string;
+  }>;
+}
+
+interface ListOffersResponseBody {
+  offers: Array<{
+    id: string;
+    code: string;
+    status: string;
+    product: {
+      id: string;
+      code: string;
+      name: string;
+      type: string;
+    };
+    inputSchema: {
+      version: number;
+      fields: Array<{
+        name: string;
+        type: string;
+        required: boolean;
+        constraints: Record<string, string | number | boolean>;
+      }>;
+    };
   }>;
 }
 
@@ -113,6 +137,33 @@ describe('Wallet and account flows (e2e)', () => {
 
     const body = response.body as SigninResponseBody;
     return body.accessToken;
+  }
+
+  function uniqueCatalogId(prefix: 'prd' | 'off'): string {
+    const suffix = `${Date.now().toString(16)}${Math.random()
+      .toString(16)
+      .slice(2)}`.slice(0, 16);
+    return `${prefix}_${suffix.padEnd(16, '0')}`;
+  }
+
+  function expectedMobileTopupInputSchema() {
+    return {
+      version: 1,
+      fields: [
+        {
+          name: 'msisdn',
+          type: 'string',
+          required: true,
+          constraints: { format: 'DZ_E164_MSISDN' },
+        },
+        {
+          name: 'amount',
+          type: 'integer',
+          required: true,
+          constraints: { min: 100, max: 10000, currency: 'DZD' },
+        },
+      ],
+    };
   }
 
   async function createAdminManagedUser(
@@ -306,6 +357,108 @@ describe('Wallet and account flows (e2e)', () => {
       .expect(404);
   });
 
+  it('lists active catalog offers with embedded product summaries', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+    const clientUser = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    const response = await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200);
+
+    const body = response.body as ListOffersResponseBody;
+    expect(body.offers).toEqual([
+      {
+        id: 'off_0000000000000002',
+        code: 'prepaid',
+        status: OfferStatus.Active,
+        product: {
+          id: 'prd_0000000000000002',
+          code: 'djezzy',
+          name: 'Djezzy',
+          type: ProductType.MobileTopup,
+        },
+        inputSchema: expectedMobileTopupInputSchema(),
+      },
+      {
+        id: 'off_0000000000000001',
+        code: 'prepaid',
+        status: OfferStatus.Active,
+        product: {
+          id: 'prd_0000000000000001',
+          code: 'mobilis',
+          name: 'Mobilis',
+          type: ProductType.MobileTopup,
+        },
+        inputSchema: expectedMobileTopupInputSchema(),
+      },
+      {
+        id: 'off_0000000000000003',
+        code: 'prepaid',
+        status: OfferStatus.Active,
+        product: {
+          id: 'prd_0000000000000003',
+          code: 'ooredoo',
+          name: 'Ooredoo',
+          type: ProductType.MobileTopup,
+        },
+        inputSchema: expectedMobileTopupInputSchema(),
+      },
+    ]);
+  });
+
+  it('hides inactive offers from catalog reads', async () => {
+    const productRepository = dataSource.getRepository(Product);
+    const offerRepository = dataSource.getRepository(Offer);
+    const product = await productRepository.save(
+      productRepository.create({
+        id: uniqueCatalogId('prd'),
+        code: `inactive-${Math.random().toString(16).slice(2)}`,
+        name: 'Inactive Provider',
+        type: ProductType.MobileTopup,
+      }),
+    );
+    await offerRepository.save(
+      offerRepository.create({
+        id: uniqueCatalogId('off'),
+        productId: product.id,
+        code: 'prepaid',
+        status: OfferStatus.Inactive,
+        inputSchema: expectedMobileTopupInputSchema(),
+      }),
+    );
+
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+    const clientUser = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    const response = await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200);
+
+    const body = response.body as ListOffersResponseBody;
+    expect(body.offers.some((offer) => offer.product.id === product.id)).toBe(
+      false,
+    );
+  });
+
+  it('rejects unauthenticated catalog reads and removed legacy product routes', async () => {
+    await request(app.getHttpServer()).get('/offers').expect(401);
+    await request(app.getHttpServer()).get('/products').expect(404);
+    await request(app.getHttpServer()).get('/products/prd_missing').expect(404);
+    await request(app.getHttpServer()).post('/products').send({}).expect(404);
+  });
+
   it('returns keyPreview metadata and accepts the raw key with ApiKey auth', async () => {
     const admin = await seedUser(UserRoles.ADMIN);
     const adminToken = await signIn(admin);
@@ -325,9 +478,9 @@ describe('Wallet and account flows (e2e)', () => {
     expect(createBody.id).toMatch(/^apk_[0-9a-f]{16}$/);
     expect(createBody.name).toBe('Mobile app integration');
     expect(createBody.apiKey.startsWith(createBody.keyPreview)).toBe(true);
-    expect(Buffer.from(createBody.keyPreview.slice(8), 'base64url').toString('utf8')).toBe(
-      `${createBody.id}.`,
-    );
+    expect(
+      Buffer.from(createBody.keyPreview.slice(8), 'base64url').toString('utf8'),
+    ).toBe(`${createBody.id}.`);
     expect(createBody).not.toHaveProperty('keyPrefix');
 
     const listApiKeysResponse = await request(app.getHttpServer())
@@ -348,5 +501,13 @@ describe('Wallet and account flows (e2e)', () => {
       .get('/account')
       .set('Authorization', `ApiKey ${createBody.apiKey}`)
       .expect(200);
+
+    const offersResponse = await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `ApiKey ${createBody.apiKey}`)
+      .expect(200);
+
+    const offersBody = offersResponse.body as ListOffersResponseBody;
+    expect(offersBody.offers).toHaveLength(3);
   });
 });

@@ -1,5 +1,13 @@
-import { BeforeInsert, Column, Entity, PrimaryColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryColumn,
+} from 'typeorm';
 import { generateProductId } from '@products/utils';
+import { Offer } from './offer.entity';
+import { ProductType } from './product-type.enum';
 
 @Entity('products')
 export class Product {
@@ -7,19 +15,16 @@ export class Product {
   id: string;
 
   @Column({ type: 'text', unique: true })
+  code: string;
+
+  @Column({ type: 'text' })
   name: string;
 
-  @Column({ type: 'float' })
-  price: number;
+  @Column({ type: 'varchar', length: 64 })
+  type: ProductType;
 
-  @Column({ type: 'text', nullable: true })
-  description: string;
-
-  @Column({ type: 'text', nullable: true })
-  category: string;
-
-  @Column({ type: 'text', nullable: true })
-  image: string;
+  @OneToMany(() => Offer, (offer) => offer.product)
+  offers?: Offer[];
 
   @BeforeInsert()
   assignId() {
