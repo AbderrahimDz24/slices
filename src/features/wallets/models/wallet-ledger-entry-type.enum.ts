@@ -1,0 +1,6 @@
+export enum WalletLedgerEntryType {
+  DEPOSIT = 'DEPOSIT',
+  RESERVATION = 'RESERVATION',
+  CONSUMPTION = 'CONSUMPTION',
+  RELEASE = 'RELEASE',
+}

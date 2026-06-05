@@ -27,6 +27,7 @@
       "@users/*": ["features/users/*"],
       "@products/*": ["features/products/*"],
       "@auth/*": ["features/auth/*"],
+      "@wallets/*": ["features/wallets/*"]
     }
   }
 }

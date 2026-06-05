@@ -1,25 +1,240 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { UserRoles } from '@common/enums';
+import { HashingService } from '@core/hashing';
+import { User } from '@users/models';
+import {
+  Wallet,
+  WalletLedgerEntry,
+  WalletLedgerEntryType,
+} from '@wallets/models';
 
-describe('AppController (e2e)', () => {
+jest.setTimeout(30000);
+
+describe('Wallet and account flows (e2e)', () => {
   let app: INestApplication<App>;
+  let dataSource: DataSource;
+  let hashing: HashingService;
 
-  beforeEach(async () => {
+  const password = 'strongPassword123';
+
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
     await app.init();
+
+    dataSource = app.get(DataSource);
+    hashing = app.get(HashingService);
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  function uniqueEmail(label: string): string {
+    const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    return `${label}.${suffix}@example.com`;
+  }
+
+  async function seedUser(role: UserRoles, withWallet = false): Promise<User> {
+    const userRepository = dataSource.getRepository(User);
+    const user = userRepository.create({
+      email: uniqueEmail(role.toLowerCase()),
+      password: await hashing.hash(password),
+      role,
+    });
+    await userRepository.save(user);
+
+    if (withWallet) {
+      await dataSource.getRepository(Wallet).save(
+        dataSource.getRepository(Wallet).create({
+          userId: user.id,
+          currency: 'DZD',
+          availableBalance: 0,
+          reservedBalance: 0,
+        }),
+      );
+    }
+
+    return user;
+  }
+
+  async function signIn(user: User): Promise<string> {
+    const response = await request(app.getHttpServer())
+      .post('/users/signin')
+      .send({ email: user.email, password })
+      .expect(200);
+
+    return response.body.accessToken as string;
+  }
+
+  async function createAdminManagedUser(
+    ownerToken: string,
+    role: UserRoles,
+  ): Promise<User> {
+    const email = uniqueEmail(role.toLowerCase());
+    const response = await request(app.getHttpServer())
+      .post('/admin/users')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ email, password, role })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      id: expect.stringMatching(/^usr_[0-9a-f]{16}$/),
+    });
+
+    const user = await dataSource
+      .getRepository(User)
+      .findOneByOrFail({ id: response.body.id as string });
+    expect(user.email).toBe(email);
+    expect(user.role).toBe(role);
+    return user;
+  }
+
+  it('removes public signup from the API surface', async () => {
+    await request(app.getHttpServer())
+      .post('/users/signup')
+      .send({ email: uniqueEmail('signup'), password })
+      .expect(404);
+  });
+
+  it('allows an OWNER to create users and creates a zero wallet', async () => {
+    const owner = await seedUser(UserRoles.OWNER);
+    const ownerToken = await signIn(owner);
+
+    const createdUser = await createAdminManagedUser(
+      ownerToken,
+      UserRoles.REGULAR,
+    );
+    const createdUserToken = await signIn(createdUser);
+
+    const accountResponse = await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `Bearer ${createdUserToken}`)
+      .expect(200);
+
+    expect(accountResponse.body).toEqual({
+      availableBalance: 0,
+      reservedBalance: 0,
+      totalBalance: 0,
+      currency: 'DZD',
+      updatedAt: expect.any(String),
+    });
+  });
+
+  it('rejects admin user creation by non-OWNER users', async () => {
+    const regular = await seedUser(UserRoles.REGULAR, true);
+    const regularToken = await signIn(regular);
+
+    await request(app.getHttpServer())
+      .post('/admin/users')
+      .set('Authorization', `Bearer ${regularToken}`)
+      .send({
+        email: uniqueEmail('blocked'),
+        password,
+        role: UserRoles.REGULAR,
+      })
+      .expect(403);
+  });
+
+  it('creates deposits, updates account balance, and writes a ledger entry', async () => {
+    const owner = await seedUser(UserRoles.OWNER);
+    const ownerToken = await signIn(owner);
+    const clientUser = await createAdminManagedUser(
+      ownerToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    await request(app.getHttpServer())
+      .post(`/admin/users/${clientUser.id}/deposits`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ amount: 2500, note: 'Initial funding' })
+      .expect(201)
+      .expect({ message: 'Deposit created successfully' });
+
+    const accountResponse = await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200);
+
+    expect(accountResponse.body).toEqual({
+      availableBalance: 2500,
+      reservedBalance: 0,
+      totalBalance: 2500,
+      currency: 'DZD',
+      updatedAt: expect.any(String),
+    });
+
+    const ledgerEntry = await dataSource
+      .getRepository(WalletLedgerEntry)
+      .findOneOrFail({
+        where: {
+          userId: clientUser.id,
+          type: WalletLedgerEntryType.DEPOSIT,
+        },
+        order: { createdAt: 'DESC' },
+      });
+
+    expect(ledgerEntry).toMatchObject({
+      userId: clientUser.id,
+      type: WalletLedgerEntryType.DEPOSIT,
+      amount: 2500,
+      currency: 'DZD',
+      availableBalanceDelta: 2500,
+      reservedBalanceDelta: 0,
+      availableBalanceAfter: 2500,
+      reservedBalanceAfter: 0,
+      actorUserId: owner.id,
+      note: 'Initial funding',
+    });
+  });
+
+  it('rejects deposits by non-OWNER users', async () => {
+    const owner = await seedUser(UserRoles.OWNER);
+    const ownerToken = await signIn(owner);
+    const regularActor = await createAdminManagedUser(
+      ownerToken,
+      UserRoles.REGULAR,
+    );
+    const targetUser = await createAdminManagedUser(
+      ownerToken,
+      UserRoles.REGULAR,
+    );
+    const regularToken = await signIn(regularActor);
+
+    await request(app.getHttpServer())
+      .post(`/admin/users/${targetUser.id}/deposits`)
+      .set('Authorization', `Bearer ${regularToken}`)
+      .send({ amount: 500 })
+      .expect(403);
+  });
+
+  it('returns 404 when an authenticated user has no wallet', async () => {
+    const owner = await seedUser(UserRoles.OWNER);
+    const ownerToken = await signIn(owner);
+    const userWithoutWallet = await seedUser(UserRoles.REGULAR);
+    const userWithoutWalletToken = await signIn(userWithoutWallet);
+
+    await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `Bearer ${userWithoutWalletToken}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .post(`/admin/users/${userWithoutWallet.id}/deposits`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ amount: 500 })
+      .expect(404);
   });
 });

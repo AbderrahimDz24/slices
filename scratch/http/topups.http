@@ -1,0 +1,75 @@
+### Sign in as OWNER
+# @name ownerSignIn
+POST {{baseUrl}}/users/signin
+Content-Type: application/json
+
+{
+  "email": "{{ownerEmail}}",
+  "password": "{{ownerPassword}}"
+}
+
+> {%
+    client.global.set("ownerAccessToken", response.body.accessToken);
+%}
+
+### Create a REGULAR client user and wallet
+# @name createClientUser
+POST {{baseUrl}}/admin/users
+Authorization: Bearer {{ownerAccessToken}}
+Content-Type: application/json
+
+{
+  "email": "{{clientEmail}}",
+  "password": "{{clientPassword}}",
+  "role": "REGULAR"
+}
+
+> {%
+    client.global.set("clientUserId", response.body.id);
+%}
+
+### Create another OWNER user
+# @name createOwnerUser
+POST {{baseUrl}}/admin/users
+Authorization: Bearer {{ownerAccessToken}}
+Content-Type: application/json
+
+{
+  "email": "owner-2@example.com",
+  "password": "{{clientPassword}}",
+  "role": "OWNER"
+}
+
+### Sign in as client user
+# @name clientSignIn
+POST {{baseUrl}}/users/signin
+Content-Type: application/json
+
+{
+  "email": "{{clientEmail}}",
+  "password": "{{clientPassword}}"
+}
+
+> {%
+    client.global.set("clientAccessToken", response.body.accessToken);
+%}
+
+### Read client account balance before deposit
+GET {{baseUrl}}/account
+Authorization: Bearer {{clientAccessToken}}
+Accept: application/json
+
+### Deposit into client wallet
+POST {{baseUrl}}/admin/users/{{clientUserId}}/deposits
+Authorization: Bearer {{ownerAccessToken}}
+Content-Type: application/json
+
+{
+  "amount": {{depositAmount}},
+  "note": "Initial funding"
+}
+
+### Read client account balance after deposit
+GET {{baseUrl}}/account
+Authorization: Bearer {{clientAccessToken}}
+Accept: application/json

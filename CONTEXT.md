@@ -5,11 +5,11 @@ This context describes the language for selling and fulfilling digital products 
 ## Language
 
 **Client Account**:
-The account that owns API keys, a wallet, and transaction history.
+The account that owns API keys, a wallet, and transaction history; in this system, it is represented by the login identity created for that client.
 _Avoid_: Customer, API client, merchant account
 
 **User**:
-The application identity used for login and roles; in this system, a user may represent a client account.
+The application identity used for login and roles; a user may represent a client account, but product-facing balances and transactions belong to the Client Account.
 _Avoid_: Treating User as the product-facing name for client-owned balances or transactions
 
 **Wallet**:

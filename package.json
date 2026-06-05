@@ -90,7 +90,8 @@
       "^@core/(.*)$": "<rootDir>/core/$1",
       "^@users/(.*)$": "<rootDir>/features/users/$1",
       "^@products/(.*)$": "<rootDir>/features/products/$1",
-      "^@auth/(.*)$": "<rootDir>/features/auth/$1"
+      "^@auth/(.*)$": "<rootDir>/features/auth/$1",
+      "^@wallets/(.*)$": "<rootDir>/features/wallets/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
