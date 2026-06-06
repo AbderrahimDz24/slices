@@ -28,7 +28,8 @@
       "@products/*": ["features/products/*"],
       "@auth/*": ["features/auth/*"],
       "@api-keys/*": ["features/api-keys/*"],
-      "@wallets/*": ["features/wallets/*"]
+      "@wallets/*": ["features/wallets/*"],
+      "@transactions/*": ["features/transactions/*"]
     }
   }
 }

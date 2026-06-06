@@ -111,3 +111,25 @@ Content-Type: application/json
   "amount": 5000,
   "note": "Initial funding"
 }
+
+### Create confirmed mobile topup transaction
+# @name createTopup
+POST {{baseUrl}}/topups
+Authorization: ApiKey {{clientApiKey}}
+Content-Type: application/json
+
+{
+  "offerId": "off_mobilis__prepaid",
+  "msisdn": "+213612345678",
+  "amount": 1000,
+  "externalId": "scratch-topup-001"
+}
+
+> {%
+    client.global.set("transactionId", response.body.id);
+%}
+
+### Get balance after topup reservation
+GET {{baseUrl}}/account
+Authorization: ApiKey {{clientApiKey}}
+Accept: application/json

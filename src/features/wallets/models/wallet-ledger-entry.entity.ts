@@ -32,6 +32,14 @@ export class WalletLedgerEntry {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Column({
+    name: 'transaction_id',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  transactionId: string | null;
+
   @Column({ type: 'varchar', length: 32 })
   type: WalletLedgerEntryType;
 

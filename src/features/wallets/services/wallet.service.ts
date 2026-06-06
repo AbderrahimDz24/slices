@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import {
   Wallet,
@@ -68,5 +72,46 @@ export class WalletService {
         manager,
       );
     });
+  }
+
+  async reserveFundsForTransaction(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    manager: EntityManager,
+  ): Promise<WalletLedgerEntry> {
+    const wallet = await this.walletRepository.findByUserIdForUpdate(
+      userId,
+      manager,
+    );
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    if (wallet.availableBalance < amount) {
+      throw new ConflictException('Insufficient available wallet balance');
+    }
+
+    wallet.availableBalance -= amount;
+    wallet.reservedBalance += amount;
+    const savedWallet = await manager.getRepository(Wallet).save(wallet);
+
+    return this.ledgerEntryRepository.createEntry(
+      {
+        walletId: savedWallet.id,
+        userId: savedWallet.userId,
+        transactionId,
+        type: WalletLedgerEntryType.RESERVATION,
+        amount,
+        currency: savedWallet.currency,
+        availableBalanceDelta: -amount,
+        reservedBalanceDelta: amount,
+        availableBalanceAfter: savedWallet.availableBalance,
+        reservedBalanceAfter: savedWallet.reservedBalance,
+        actorUserId: null,
+        note: null,
+      },
+      manager,
+    );
   }
 }

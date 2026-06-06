@@ -13,6 +13,7 @@
     "^@products/(.*)$": "<rootDir>/../src/features/products/$1",
     "^@auth/(.*)$": "<rootDir>/../src/features/auth/$1",
     "^@api-keys/(.*)$": "<rootDir>/../src/features/api-keys/$1",
-    "^@wallets/(.*)$": "<rootDir>/../src/features/wallets/$1"
+    "^@wallets/(.*)$": "<rootDir>/../src/features/wallets/$1",
+    "^@transactions/(.*)$": "<rootDir>/../src/features/transactions/$1"
   }
 }

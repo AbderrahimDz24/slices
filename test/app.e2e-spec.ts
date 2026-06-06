@@ -7,6 +7,11 @@ import { AppModule } from '../src/app.module';
 import { UserRoles } from '@common/enums';
 import { HashingService } from '@core/hashing';
 import { Offer, OfferStatus, Product, ProductType } from '@products/models';
+import {
+  ProviderDispatchOutbox,
+  Transaction,
+  TransactionStatus,
+} from '@transactions/models';
 import { User } from '@users/models';
 import {
   Wallet,
@@ -73,6 +78,20 @@ interface ListOffersResponseBody {
   }>;
 }
 
+interface CreateMobileTopupResponseBody {
+  id: string;
+  status: TransactionStatus;
+  offerId: string;
+  productId: string;
+  productCode: string;
+  amount: number;
+  currency: string;
+  msisdn: string;
+  externalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 jest.setTimeout(30000);
 
 describe('Wallet and account flows (e2e)', () => {
@@ -98,6 +117,17 @@ describe('Wallet and account flows (e2e)', () => {
 
     dataSource = app.get(DataSource);
     hashing = app.get(HashingService);
+
+    await dataSource.query(
+      `
+        UPDATE offers
+        SET status = $1
+        WHERE product_id IN (
+          SELECT id FROM products WHERE type <> $2
+        )
+      `,
+      [OfferStatus.Inactive, ProductType.MobileTopup],
+    );
   });
 
   afterAll(async () => {
@@ -191,6 +221,50 @@ describe('Wallet and account flows (e2e)', () => {
     expect(user.email).toBe(email);
     expect(user.role).toBe(role);
     return user;
+  }
+
+  async function createClientApiKey(
+    clientToken: string,
+    name = 'Topup integration',
+  ): Promise<CreateApiKeyResponseBody> {
+    const response = await request(app.getHttpServer())
+      .post('/account/api-keys')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ name })
+      .expect(201);
+
+    return response.body as CreateApiKeyResponseBody;
+  }
+
+  async function createClientWithApiKey(balance = 5000): Promise<{
+    adminToken: string;
+    clientUser: User;
+    clientToken: string;
+    apiKey: string;
+  }> {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+    const clientUser = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    if (balance > 0) {
+      await request(app.getHttpServer())
+        .post(`/admin/users/${clientUser.id}/deposits`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ amount: balance, note: 'Topup test funding' })
+        .expect(201);
+    }
+
+    const apiKey = await createClientApiKey(clientToken);
+    return {
+      adminToken,
+      clientUser,
+      clientToken,
+      apiKey: apiKey.apiKey,
+    };
   }
 
   it('removes public signup from the API surface', async () => {
@@ -462,6 +536,242 @@ describe('Wallet and account flows (e2e)', () => {
     await request(app.getHttpServer()).get('/products').expect(404);
     await request(app.getHttpServer()).get('/products/prd_missing').expect(404);
     await request(app.getHttpServer()).post('/products').send({}).expect(404);
+  });
+
+  it('creates a confirmed mobile topup transaction, reserves funds, and writes dispatch work', async () => {
+    const { clientUser, apiKey } = await createClientWithApiKey(5000);
+
+    const response = await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 1000,
+        externalId: 'topup-success-1',
+      })
+      .expect(201);
+
+    const body = response.body as CreateMobileTopupResponseBody;
+    expect(body.id).toMatch(/^txn_[0-9a-f]{16}$/);
+    expect(body).toMatchObject({
+      status: TransactionStatus.Confirmed,
+      offerId: 'off_mobilis__prepaid',
+      productId: 'prd_mobilis_00000001',
+      productCode: 'mobilis',
+      amount: 1000,
+      currency: 'DZD',
+      msisdn: '+213612345678',
+      externalId: 'topup-success-1',
+    });
+    expect(typeof body.createdAt).toBe('string');
+    expect(typeof body.updatedAt).toBe('string');
+
+    const wallet = await dataSource
+      .getRepository(Wallet)
+      .findOneByOrFail({ userId: clientUser.id });
+    expect(wallet.availableBalance).toBe(4000);
+    expect(wallet.reservedBalance).toBe(1000);
+
+    const transaction = await dataSource
+      .getRepository(Transaction)
+      .findOneByOrFail({ id: body.id });
+    expect(transaction).toMatchObject({
+      userId: clientUser.id,
+      status: TransactionStatus.Confirmed,
+      offerId: 'off_mobilis__prepaid',
+      productId: 'prd_mobilis_00000001',
+      productCode: 'mobilis',
+      amount: 1000,
+      currency: 'DZD',
+      externalId: 'topup-success-1',
+      inputs: { msisdn: '+213612345678' },
+    });
+
+    const ledgerEntry = await dataSource
+      .getRepository(WalletLedgerEntry)
+      .findOneByOrFail({
+        userId: clientUser.id,
+        transactionId: body.id,
+        type: WalletLedgerEntryType.RESERVATION,
+      });
+    expect(ledgerEntry).toMatchObject({
+      amount: 1000,
+      availableBalanceDelta: -1000,
+      reservedBalanceDelta: 1000,
+      availableBalanceAfter: 4000,
+      reservedBalanceAfter: 1000,
+      actorUserId: null,
+      note: null,
+    });
+
+    const outbox = await dataSource
+      .getRepository(ProviderDispatchOutbox)
+      .findOneByOrFail({ transactionId: body.id });
+    expect(outbox).toMatchObject({
+      transactionId: body.id,
+      queueName: 'provider-dispatch',
+      jobName: 'fulfill-transaction',
+      payload: { transactionId: body.id },
+    });
+  });
+
+  it('allows only ApiKey-authenticated clients to create topups', async () => {
+    const { clientToken } = await createClientWithApiKey(5000);
+
+    await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 1000,
+      })
+      .expect(401);
+  });
+
+  it('rejects missing, inactive, and non-mobile-topup offers', async () => {
+    const productRepository = dataSource.getRepository(Product);
+    const offerRepository = dataSource.getRepository(Offer);
+
+    const inactiveProduct = await productRepository.save(
+      productRepository.create({
+        id: uniqueCatalogId('prd'),
+        code: `inactive-topup-${Math.random().toString(16).slice(2)}`,
+        name: 'Inactive Mobile Network',
+        type: ProductType.MobileTopup,
+      }),
+    );
+    const inactiveOfferId = uniqueCatalogId('off');
+    await offerRepository.save(
+      offerRepository.create({
+        id: inactiveOfferId,
+        productId: inactiveProduct.id,
+        code: 'prepaid',
+        status: OfferStatus.Inactive,
+        inputSchema: expectedMobileTopupInputSchema(),
+      }),
+    );
+
+    const otherProduct = await productRepository.save(
+      productRepository.create({
+        id: uniqueCatalogId('prd'),
+        code: `gift-card-${Math.random().toString(16).slice(2)}`,
+        name: 'Gift Card',
+        type: 'GIFT_CARD' as ProductType,
+      }),
+    );
+    const otherOfferId = uniqueCatalogId('off');
+    await offerRepository.save(
+      offerRepository.create({
+        id: otherOfferId,
+        productId: otherProduct.id,
+        code: 'standard',
+        status: OfferStatus.Active,
+        inputSchema: expectedMobileTopupInputSchema(),
+      }),
+    );
+
+    for (const offerId of [
+      'off_missing_000000',
+      inactiveOfferId,
+      otherOfferId,
+    ]) {
+      const client = await createClientWithApiKey(5000);
+      await request(app.getHttpServer())
+        .post('/topups')
+        .set('Authorization', `ApiKey ${client.apiKey}`)
+        .send({
+          offerId,
+          msisdn: '+213612345678',
+          amount: 1000,
+        })
+        .expect(404);
+    }
+
+    await offerRepository.update(otherOfferId, {
+      status: OfferStatus.Inactive,
+    });
+  });
+
+  it('rejects invalid topup amount, MSISDN format, and mobile network prefix', async () => {
+    for (const payload of [
+      {
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 50,
+      },
+      {
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '0612345678',
+        amount: 1000,
+      },
+      {
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213512345678',
+        amount: 1000,
+      },
+    ]) {
+      const { apiKey } = await createClientWithApiKey(5000);
+      await request(app.getHttpServer())
+        .post('/topups')
+        .set('Authorization', `ApiKey ${apiKey}`)
+        .send(payload)
+        .expect(400);
+    }
+  });
+
+  it('rejects duplicate externalId values per client account', async () => {
+    const { apiKey } = await createClientWithApiKey(5000);
+
+    await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 1000,
+        externalId: 'dup-external-id',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345679',
+        amount: 1000,
+        externalId: 'dup-external-id',
+      })
+      .expect(409);
+  });
+
+  it('rejects insufficient balance without creating a transaction', async () => {
+    const { clientUser, apiKey } = await createClientWithApiKey(500);
+
+    await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 1000,
+        externalId: 'insufficient-balance-1',
+      })
+      .expect(409);
+
+    const wallet = await dataSource
+      .getRepository(Wallet)
+      .findOneByOrFail({ userId: clientUser.id });
+    expect(wallet.availableBalance).toBe(500);
+    expect(wallet.reservedBalance).toBe(0);
+
+    const transaction = await dataSource.getRepository(Transaction).findOneBy({
+      userId: clientUser.id,
+      externalId: 'insufficient-balance-1',
+    });
+    expect(transaction).toBeNull();
   });
 
   it('returns keyPreview metadata and accepts the raw key with ApiKey auth', async () => {

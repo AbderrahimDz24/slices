@@ -13,6 +13,7 @@ import { AuthModule } from '@auth/auth.module';
 import { ApiKeysModule } from '@api-keys/api-keys.module';
 import { ProductsModule } from '@products/products.module';
 import { WalletsModule } from '@wallets/wallets.module';
+import { TransactionsModule } from '@transactions/transactions.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { WalletsModule } from '@wallets/wallets.module';
     CoreModule,
     WalletsModule,
     ProductsModule,
+    TransactionsModule,
     UsersModule,
     ApiKeysModule,
     AuthModule,

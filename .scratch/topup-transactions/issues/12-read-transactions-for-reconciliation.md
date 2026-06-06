@@ -5,17 +5,17 @@ Type: AFK
 
 ## What to build
 
-Expose transaction reads for integration clients so they can reconcile platform transactions with their own systems. Reads must be scoped to the API-key user's account.
+Expose mobile topup transaction reads for integration clients so they can reconcile platform transactions with their own systems. Reads must be scoped to the API-key user's account and backed by the generic transaction model.
 
 ## Acceptance criteria
 
-- [ ] `GET /transactions` lists transactions for the authenticated API-key user.
-- [ ] `GET /transactions?external_id=...` returns the matching transaction for the authenticated API-key user.
-- [ ] `GET /transactions/:transaction_id` returns one transaction for the authenticated API-key user.
-- [ ] Transaction responses include status, amount, currency, MSISDN, product/offer reference, `external_id`, timestamps, and failure reason when present.
-- [ ] A user cannot read another user's transactions by ID or `external_id`.
+- [ ] `GET /topups` lists mobile topup transactions for the authenticated API-key user.
+- [ ] `GET /topups?externalId=...` returns the matching mobile topup transaction for the authenticated API-key user.
+- [ ] `GET /topups/:transactionId` returns one mobile topup transaction for the authenticated API-key user.
+- [ ] Topup transaction responses include status, amount, currency, MSISDN, product/offer reference, `externalId`, timestamps, and failure reason when present.
+- [ ] A user cannot read another user's transactions by ID or `externalId`.
 - [ ] Missing records return not found.
-- [ ] Tests cover list, lookup by ID, lookup by `external_id`, not found, and account isolation.
+- [ ] Tests cover list, lookup by ID, lookup by `externalId`, not found, and account isolation.
 
 ## Blocked by
 

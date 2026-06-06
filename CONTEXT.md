@@ -40,6 +40,10 @@ _Avoid_: Treating mobile topup as the whole platform model
 The mobile phone number that receives a mobile topup.
 _Avoid_: Phone number as a loose term when the field must identify the topup recipient
 
+**Mobile Network**:
+The carrier network identified by an MSISDN prefix for mobile topup routing and validation.
+_Avoid_: Operator
+
 **Offer**:
 A purchasable configuration under a digital product.
 _Avoid_: SKU, plan, package

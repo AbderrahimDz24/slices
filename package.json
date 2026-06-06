@@ -42,6 +42,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.78.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.1",
@@ -96,7 +97,8 @@
       "^@products/(.*)$": "<rootDir>/features/products/$1",
       "^@auth/(.*)$": "<rootDir>/features/auth/$1",
       "^@api-keys/(.*)$": "<rootDir>/features/api-keys/$1",
-      "^@wallets/(.*)$": "<rootDir>/features/wallets/$1"
+      "^@wallets/(.*)$": "<rootDir>/features/wallets/$1",
+      "^@transactions/(.*)$": "<rootDir>/features/transactions/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
