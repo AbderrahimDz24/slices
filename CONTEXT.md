@@ -52,6 +52,14 @@ _Avoid_: Order, topup
 A credential created for a client account so an integration can act as that account.
 _Avoid_: Token, password
 
+**Integration API**:
+The client-account-facing API surface used by integrations to read account state, discover offers, and create or reconcile transactions.
+_Avoid_: Treating admin or login flows as integration APIs
+
+**Client Account Rate Limit**:
+A request budget shared by all credentials acting for one client account.
+_Avoid_: Per-token or per-API-key budget when the limit is meant to protect the client account as a whole
+
 **Provider**:
 The fulfillment boundary responsible for delivering a transaction outcome.
 _Avoid_: Operator, gateway

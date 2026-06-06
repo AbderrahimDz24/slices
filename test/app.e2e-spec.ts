@@ -83,6 +83,11 @@ describe('Wallet and account flows (e2e)', () => {
   const password = 'strongPassword123';
 
   beforeAll(async () => {
+    process.env.REDIS_HOST ??= 'localhost';
+    process.env.REDIS_PORT ??= '50052';
+    process.env.CLIENT_ACCOUNT_RATE_LIMIT_LIMIT = '2';
+    process.env.CLIENT_ACCOUNT_RATE_LIMIT_TTL_MS = '60000';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -374,11 +379,11 @@ describe('Wallet and account flows (e2e)', () => {
     const body = response.body as ListOffersResponseBody;
     expect(body.offers).toEqual([
       {
-        id: 'off_0000000000000002',
+        id: 'off_djezzy___prepaid',
         code: 'prepaid',
         status: OfferStatus.Active,
         product: {
-          id: 'prd_0000000000000002',
+          id: 'prd_djezzy_000000002',
           code: 'djezzy',
           name: 'Djezzy',
           type: ProductType.MobileTopup,
@@ -386,11 +391,11 @@ describe('Wallet and account flows (e2e)', () => {
         inputSchema: expectedMobileTopupInputSchema(),
       },
       {
-        id: 'off_0000000000000001',
+        id: 'off_mobilis__prepaid',
         code: 'prepaid',
         status: OfferStatus.Active,
         product: {
-          id: 'prd_0000000000000001',
+          id: 'prd_mobilis_00000001',
           code: 'mobilis',
           name: 'Mobilis',
           type: ProductType.MobileTopup,
@@ -398,11 +403,11 @@ describe('Wallet and account flows (e2e)', () => {
         inputSchema: expectedMobileTopupInputSchema(),
       },
       {
-        id: 'off_0000000000000003',
+        id: 'off_ooredoo__prepaid',
         code: 'prepaid',
         status: OfferStatus.Active,
         product: {
-          id: 'prd_0000000000000003',
+          id: 'prd_ooredoo_00000003',
           code: 'ooredoo',
           name: 'Ooredoo',
           type: ProductType.MobileTopup,
@@ -509,5 +514,64 @@ describe('Wallet and account flows (e2e)', () => {
 
     const offersBody = offersResponse.body as ListOffersResponseBody;
     expect(offersBody.offers).toHaveLength(3);
+
+    await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', 'ApiKey ak_test_invalid')
+      .expect(401);
+
+    await request(app.getHttpServer())
+      .delete(`/account/api-keys/${createBody.id}`)
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200)
+      .expect({ id: createBody.id });
+
+    await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `ApiKey ${createBody.apiKey}`)
+      .expect(401);
+  });
+
+  it('rate limits the integration surface by Client Account across Bearer and ApiKey credentials', async () => {
+    const admin = await seedUser(UserRoles.ADMIN);
+    const adminToken = await signIn(admin);
+    const clientUser = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const clientToken = await signIn(clientUser);
+
+    const createApiKeyResponse = await request(app.getHttpServer())
+      .post('/account/api-keys')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({ name: 'Shared budget integration' })
+      .expect(201);
+    const createBody = createApiKeyResponse.body as CreateApiKeyResponseBody;
+
+    await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/account')
+      .set('Authorization', `ApiKey ${createBody.apiKey}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .expect(429);
+
+    const otherClient = await createAdminManagedUser(
+      adminToken,
+      UserRoles.REGULAR,
+    );
+    const otherClientToken = await signIn(otherClient);
+
+    await request(app.getHttpServer())
+      .get('/offers')
+      .set('Authorization', `Bearer ${otherClientToken}`)
+      .expect(200);
   });
 });

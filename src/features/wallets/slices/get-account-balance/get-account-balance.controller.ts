@@ -1,6 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ActiveUser, Auth, Roles } from '@auth/decorators';
+import {
+  ActiveUser,
+  Auth,
+  ClientAccountRateLimit,
+  Roles,
+} from '@auth/decorators';
 import type { ActiveUserData } from '@auth/common';
 import { AuthType } from '@auth/enums';
 import { UserRoles } from '@common/enums';
@@ -17,6 +22,7 @@ export class GetAccountBalanceController {
   @Get()
   @Auth(AuthType.Bearer, AuthType.ApiKey)
   @Roles(UserRoles.REGULAR)
+  @ClientAccountRateLimit()
   @GetAccountBalanceDocs()
   async getAccountBalance(
     @ActiveUser() activeUser: ActiveUserData,

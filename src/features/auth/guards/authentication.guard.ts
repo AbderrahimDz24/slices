@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ApiKeyAuthGuard } from '@api-keys/guards';
+import { ClientAccountRateLimitGuard } from '@core/rate-limiting';
 import { AuthType } from '@auth/enums';
 import { isObservable, lastValueFrom, Observable } from 'rxjs';
 import { AUTH_TYPE_KEY } from '../decorators/auth.decorator';
@@ -21,6 +22,7 @@ export class AuthenticationGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly jwtAuthGuard: JwtAuthGuard,
     private readonly apiKeyAuthGuard: ApiKeyAuthGuard,
+    private readonly clientAccountRateLimitGuard: ClientAccountRateLimitGuard,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,10 +41,14 @@ export class AuthenticationGuard implements CanActivate {
           guard.canActivate(context),
         );
         if (canActivate) {
+          await this.clientAccountRateLimitGuard.canActivate(context);
           return true;
         }
       } catch (err) {
-        error = err instanceof UnauthorizedException ? err : error;
+        if (!(err instanceof UnauthorizedException)) {
+          throw err;
+        }
+        error = err;
       }
     }
 

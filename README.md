@@ -47,7 +47,10 @@ npm ci
 - PG_USER=postgres
 - PG_PASSWORD=123456
 - PG_DB=slices
+- REDIS_HOST=localhost
 - REDIS_PORT=50052
+- CLIENT_ACCOUNT_RATE_LIMIT_LIMIT=60
+- CLIENT_ACCOUNT_RATE_LIMIT_TTL_MS=60000
 - COMPOSE_PROJECT_NAME=slices-api-dev
 - JWT_SECRET=supersecret_dev_key
 - JWT_TOKEN_AUDIENCE=http://localhost:3000
@@ -117,6 +120,7 @@ Notes:
 
 - TypeORM schema changes are applied through migrations; do not rely on `synchronize` for local schema setup.
 - `API_KEY_MODE` must be `test` for local/dev/staging environments and `live` for production. API keys from one mode are rejected by servers running in the other mode.
+- Integration API reads are rate-limited per Client Account. Bearer and ApiKey requests for the same Client Account share the `CLIENT_ACCOUNT_RATE_LIMIT_LIMIT` budget over `CLIENT_ACCOUNT_RATE_LIMIT_TTL_MS`; Redis must be reachable at `REDIS_HOST:REDIS_PORT` for enforcement. If Redis is unavailable at runtime, the app logs the storage error and allows the request.
 - Swagger is available at /docs and includes global Bearer and ApiKey auth headers; click Authorize to set credentials.
 
 ## Project structure (high level)

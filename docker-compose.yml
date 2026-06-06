@@ -16,6 +16,17 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:8.2-alpine
+    container_name: slices_redis_demo
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   app:
     build:
       context: ./
@@ -28,6 +39,10 @@ services:
       PG_USER: postgres
       PG_PASSWORD: 123456
       PG_DB: slices
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CLIENT_ACCOUNT_RATE_LIMIT_LIMIT: 60
+      CLIENT_ACCOUNT_RATE_LIMIT_TTL_MS: 60000
       # JWT configuration (see src/core/auth/jwt.config.ts)
       JWT_SECRET: supersecret_dev_key
       JWT_TOKEN_AUDIENCE: http://localhost:3000
@@ -40,6 +55,8 @@ services:
       - "3000:3000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
