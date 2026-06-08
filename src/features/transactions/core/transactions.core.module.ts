@@ -11,6 +11,7 @@ import {
   CreateMobileTopupTransactionService,
   ProviderDispatchOutboxService,
   ProviderDispatchQueueService,
+  ReadMobileTopupTransactionService,
 } from '@transactions/services';
 
 const providers = [
@@ -19,6 +20,7 @@ const providers = [
   ProviderDispatchQueueService,
   ProviderDispatchOutboxService,
   CreateMobileTopupTransactionService,
+  ReadMobileTopupTransactionService,
 ];
 
 @Module({

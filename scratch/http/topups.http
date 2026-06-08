@@ -86,11 +86,6 @@ GET {{baseUrl}}/account/api-keys
 Authorization: Bearer {{clientAccessToken}}
 Accept: application/json
 
-### Revoke API key
-DELETE {{baseUrl}}/account/api-keys/{{clientApiKeyId}}
-Authorization: Bearer {{clientAccessToken}}
-Accept: application/json
-
 ### Get balance (API key)
 GET {{baseUrl}}/account
 Authorization: ApiKey {{clientApiKey}}
@@ -122,14 +117,30 @@ Content-Type: application/json
   "offerId": "off_mobilis__prepaid",
   "msisdn": "+213612345678",
   "amount": 1000,
-  "externalId": "scratch-topup-001"
+  "externalId": "{{$random.uuid}}"
 }
 
 > {%
     client.global.set("transactionId", response.body.id);
+    client.global.set("externalId", response.body.externalId);
 %}
+
+### Get topup by transaction ID
+GET {{baseUrl}}/topups/{{transactionId}}
+Authorization: ApiKey {{clientApiKey}}
+Accept: application/json
+
+### Get topup by external ID
+GET {{baseUrl}}/topups/get-by-external-id?externalId={{externalId}}
+Authorization: ApiKey {{clientApiKey}}
+Accept: application/json
 
 ### Get balance after topup reservation
 GET {{baseUrl}}/account
 Authorization: ApiKey {{clientApiKey}}
+Accept: application/json
+
+### Revoke API key
+DELETE {{baseUrl}}/account/api-keys/{{clientApiKeyId}}
+Authorization: Bearer {{clientAccessToken}}
 Accept: application/json

@@ -88,6 +88,7 @@ interface CreateMobileTopupResponseBody {
   currency: string;
   msisdn: string;
   externalId: string | null;
+  failureReason: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -265,6 +266,24 @@ describe('Wallet and account flows (e2e)', () => {
       clientToken,
       apiKey: apiKey.apiKey,
     };
+  }
+
+  async function createConfirmedTopup(
+    apiKey: string,
+    externalId: string,
+  ): Promise<CreateMobileTopupResponseBody> {
+    const response = await request(app.getHttpServer())
+      .post('/topups')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .send({
+        offerId: 'off_mobilis__prepaid',
+        msisdn: '+213612345678',
+        amount: 1000,
+        externalId,
+      })
+      .expect(201);
+
+    return response.body as CreateMobileTopupResponseBody;
   }
 
   it('removes public signup from the API surface', async () => {
@@ -563,6 +582,7 @@ describe('Wallet and account flows (e2e)', () => {
       currency: 'DZD',
       msisdn: '+213612345678',
       externalId: 'topup-success-1',
+      failureReason: null,
     });
     expect(typeof body.createdAt).toBe('string');
     expect(typeof body.updatedAt).toBe('string');
@@ -614,6 +634,99 @@ describe('Wallet and account flows (e2e)', () => {
       jobName: 'fulfill-transaction',
       payload: { transactionId: body.id },
     });
+  });
+
+  it('returns a mobile topup transaction by transaction id', async () => {
+    const { apiKey } = await createClientWithApiKey(5000);
+    const created = await createConfirmedTopup(apiKey, 'lookup-by-id-1');
+
+    const response = await request(app.getHttpServer())
+      .get(`/topups/${created.id}`)
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .expect(200);
+
+    const body = response.body as CreateMobileTopupResponseBody;
+    expect(body).toMatchObject({
+      id: created.id,
+      status: TransactionStatus.Confirmed,
+      offerId: 'off_mobilis__prepaid',
+      productId: 'prd_mobilis_00000001',
+      productCode: 'mobilis',
+      amount: 1000,
+      currency: 'DZD',
+      msisdn: '+213612345678',
+      externalId: 'lookup-by-id-1',
+      failureReason: null,
+    });
+  });
+
+  it('returns a mobile topup transaction by externalId', async () => {
+    const { apiKey } = await createClientWithApiKey(5000);
+    const created = await createConfirmedTopup(apiKey, 'lookup-by-external-1');
+
+    const response = await request(app.getHttpServer())
+      .get('/topups/get-by-external-id')
+      .query({ externalId: 'lookup-by-external-1' })
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .expect(200);
+
+    const body = response.body as CreateMobileTopupResponseBody;
+    expect(body).toMatchObject({
+      id: created.id,
+      status: TransactionStatus.Confirmed,
+      externalId: 'lookup-by-external-1',
+      failureReason: null,
+    });
+  });
+
+  it('prevents another client account from reading topups by id or externalId', async () => {
+    const owner = await createClientWithApiKey(5000);
+    const created = await createConfirmedTopup(
+      owner.apiKey,
+      'isolated-external-id',
+    );
+    const otherClient = await createClientWithApiKey(5000);
+
+    await request(app.getHttpServer())
+      .get(`/topups/${created.id}`)
+      .set('Authorization', `ApiKey ${otherClient.apiKey}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/topups/get-by-external-id')
+      .query({ externalId: 'isolated-external-id' })
+      .set('Authorization', `ApiKey ${otherClient.apiKey}`)
+      .expect(404);
+  });
+
+  it('returns 404 for missing topup lookups', async () => {
+    const { apiKey } = await createClientWithApiKey(5000);
+
+    await request(app.getHttpServer())
+      .get('/topups/txn_missing0000000')
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/topups/get-by-external-id')
+      .query({ externalId: 'missing-external-id' })
+      .set('Authorization', `ApiKey ${apiKey}`)
+      .expect(404);
+  });
+
+  it('validates get-by-external-id query input', async () => {
+    for (const query of [
+      {},
+      { externalId: '' },
+      { externalId: 'x'.repeat(129) },
+    ]) {
+      const { apiKey } = await createClientWithApiKey(5000);
+      await request(app.getHttpServer())
+        .get('/topups/get-by-external-id')
+        .query(query)
+        .set('Authorization', `ApiKey ${apiKey}`)
+        .expect(400);
+    }
   });
 
   it('allows only ApiKey-authenticated clients to create topups', async () => {
